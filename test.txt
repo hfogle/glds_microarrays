@@ -1,0 +1,1 @@
+Rscript --vanilla glds_microarrays.R --help

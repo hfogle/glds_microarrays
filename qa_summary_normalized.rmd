@@ -1,0 +1,118 @@
+---
+title: "Normalized Data Quality Assessment"
+author: "NASA GeneLab Project"
+date: "4/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Normalized Data MA Plot
+```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
+ 
+  dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData","QC_Repports"), showWarnings = FALSE)
+  path <- file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData","QC_Repports")
+  setwd(path)
+count <- dim(targets$t1)[1]
+printrows <- ceiling(count/4)
+width <- 2000
+png(filename = file.path(path,"normPlotMA.png"), width = width, height = ceiling(width/4)*printrows)
+par(mfrow = c(printrows,4),mar=c(5,5,5,5))
+for (i in 1:count){
+  plotMD(data, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(data)[i])
+  }
+invisible(dev.off())
+for (i in 1:count){
+  plotMD(data, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(data)[i])
+  }
+
+rm(path,printrows,width,count,i)
+```
+
+## Normalized Density Distribution Plot
+```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
+  path <- file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData","QC_Repports")
+  setwd(path)
+count <- dim(targets$t1)[1]
+plotDensities(data, legend = FALSE)
+legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
+png(file = "normDensityDistributions.png", width = 1000, height = 800)
+plotDensities(data, legend = FALSE)
+legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
+
+invisible(dev.off())
+  
+```
+
+## Normalized Box Plot
+```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
+
+path <- file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData","QC_Repports")
+setwd(path)
+
+png(filename = file.path(path,"normBoxplot.png"), width = 1000, height = 1000)
+  par(mar=c(30,5,5,5))
+boxplot(data.frame(log2(as.matrix(data))),main=paste0(opt$glds," Normalized Intensities"), las=2,outline=FALSE)
+invisible(dev.off())
+  
+boxplot(data.frame(log2(as.matrix(data))),main=paste0(opt$glds," Normalized Intensities"), las=2,outline=FALSE)
+
+```
+
+## Normalized PCA Plot
+```{r}
+path <- file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData","QC_Repports")
+setwd(path)
+
+### Create Normalized PCA Plots
+library(ggplot2)
+try(exp_raw <- log2(as.matrix(data)))
+try(exp_raw <- log2(exprs(data)))
+PCA_raw <- prcomp(t(exp_raw), scale. = FALSE)
+
+percentVar <- round(100*PCA_raw$sdev^2/sum(PCA_raw$sdev^2),1)
+sd_ratio <- sqrt(percentVar[2] / percentVar[1])
+
+dataGG <- data.frame(PC1 = PCA_raw$x[,1], PC2 = PCA_raw$x[,2], Group = targets$t1$Group)
+
+PCA_plot <- ggplot(dataGG, aes(PC1, PC2)) +
+  geom_point(aes(colour = Group)) +
+  ggtitle("Normalized Data PCA Plot of log2 Expression") +
+  xlab(paste0("PC1, VarExp: ", percentVar[1], "%")) +
+  ylab(paste0("PC2, VarExp: ", percentVar[2], "%"))
+png(filename = file.path(path,"normPCA.png"), width = 800, height = 600)
+plot(PCA_plot)
+invisible(dev.off())
+plot(PCA_plot)
+write.csv(PCA_raw$x, file = "visualization_PCA_table.csv")
+rm(PCA_plot,PCA_raw,exp_raw,dataGG,path,sd_ratio,percentVar)
+```
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
