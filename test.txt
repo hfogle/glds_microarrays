@@ -1,1 +1,9 @@
+
+# View script options
 Rscript --vanilla glds_microarrays.R --help
+
+# Test Affymetrix processing with demo_dataset
+Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121
+
+# Test Affymetrix processing by API (not ready yet)
+# Rscript --vanilla glds_microarrays.R --glds GLDS-121
