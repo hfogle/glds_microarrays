@@ -4,7 +4,7 @@
 library("optparse")
 
 option_list = list(
-  make_option(c("-f", "--file"), type="character", default=NULL, 
+  make_option(c("-f", "--files"), type="character", default=NULL, 
               help="Dataset file paths", metavar="character"),
   make_option(c("-i", "--isa"), type="character", default=NULL, 
               help="Study ISAtab.zip file path", metavar="character"),
@@ -15,36 +15,72 @@ option_list = list(
   make_option(c("-a", "--annotation"), type="character", default=NULL, 
               help="Organism annotation file path", metavar="character"),
   make_option(c("-g", "--glds"), type="character", default=NULL, 
-              help="GeneLab study identifier", metavar="character"),
-  make_option(c("-d", "--dir"), type="character", default=NULL, 
-              help="Local input directory", metavar="character"),
+              help="GeneLab study identifier (e.g. GLDS-121)", metavar="character"),
   make_option(c("-m", "--platform"), type="character", default=NULL, 
               help="Microarray Platform", metavar="character"), 
   make_option(c("-d", "--dir"), type="character", default=NULL,
-              help="input directory path", metavar="character"),
-  make_option(c("-o", "--out"), type="character", default="out.txt", 
-              help="output directory path [default= %default]", metavar="character"),
+              help="Curated input directory path", metavar="character"),
+  make_option(c("-o", "--out"), type="character", default=getwd(), 
+              help="output parent directory path [default= %default]", metavar="character")
   
 );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-if (is.null(opt$file)){
+if (is.null(opt$glds)){
   print_help(opt_parser)
-  stop("At least one argument must be supplied (input file).n", call.=FALSE)
+  stop("At least one argument must be supplied (GLDS)", call.=FALSE)
 }
+### Get organism annotation package
+options(connectionObserver = NULL)
+organism_table <- read.csv(file = file.path(getwd(),"organisms.csv"), header = TRUE, stringsAsFactors = FALSE)
+ann.dbi <- organism_table$annotations[organism_table$species == opt$organism] # Organism specific gene annotation database
+ann.dbi=as.character(ann.dbi)
+if(!require(ann.dbi, character.only=TRUE)) {
+  BiocManager::install(ann.dbi, ask = FALSE)
+  library(ann.dbi, character.only=TRUE)
+}
+cat("\n Organism annotation set loaded: ",ann.dbi,"\n")
+
+
+### Get Study Files
+if (is.null(opt$files)){
+  cat("\nStart processing ",opt$glds, "\n")
+}
+
+if (!is.null(opt$dir)){
+  cat("Building from local curated directory\n")
+  opt$isa <- list.files(file.path(getwd(),opt$dir,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
+  opt$probe <- list.files(file.path(getwd(),opt$dir,"Metadata"),pattern = "*annotation*", full.names = TRUE)
+  opt$files <- list.files(file.path(getwd(),opt$dir,"00-RawData"),full.names = TRUE)
+  str(opt)
+  
+  tempin <- tempdir()
+  unlink(list.files(tempin, full.names = TRUE))
+  dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
+  file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+  opt$files <- list.files(file.path(tempin,"00-RawData"),full.names = TRUE)
+  dir.create(file.path(tempin,"Metadata"),showWarnings = FALSE)
+  file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+  opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
+  file.copy(from = opt$probe, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+  opt$probe <- list.files(file.path(tempin,"Metadata"),pattern = "*annotation*", full.names = TRUE)
+}
+
 
 ### Determine Platform
 
 ### Selects appropriate package for plots
-if ((opt$platform == "Affymetrix Expression") | (opt$platform == "Affymetrix ST") | (opt$platform == "NimbleGen")){
+plots <- NULL
+if ((opt$platform == "Affymetrix") | (opt$platform == "NimbleGen")){
   plots <- "OLIGO"
 }else if((opt$platform == "Illumina BeadChip") | (opt$platform == "Agilent") | (opt$platform == "Agilent GenePix")){
   plots <- "LIMMA"
 }else {
   plots <- NULL
 }
+cat("\nPlots generate by package ",plots,"\n")
 
 ### Parse ISA
 
@@ -55,24 +91,19 @@ if (length(all_targets) == 1){
 }else{
   targets <- all_targets[[which_assay]]
 }
+cat("\nTargets\n")
+str(targets)
 
-### Select Filters (MaxIQR, Annotated, Control Probes, Low Expression)
 
-opt$model <- "Group Contrast"
-opt$estimation <- "Max IQR"
-
-opt$filter_nonexpressed <- TRUE
-opt$filter_control <- TRUE
-opt$filter_nonannotated <- TRUE
 
 ### Call appropriate platform processing script
 
-if(opt$platform=="affymetrix"){
-  source(file.path("platform","affymetrix.R"))
+if(opt$platform=="Affymetrix"){
+  source(file.path(getwd(),"platforms","affymetrix.R"))
 }else if(opt$platform=="agilent_one_channel"){
-  source(file.path("platform","agilent_one_channel.R"))
+  source(file.path(getwd(),"platforms","agilent_one_channel.R"))
 }else if(opt$platform=="agilent_two_channel"){
-  source(file.path("platform","agilent_two_channel.R"))
+  source(file.path(getwd(),"platforms","agilent_two_channel.R"))
 }else{
   print_help(opt_parser)
   stop("Platform not currently supported.n", call.=FALSE)
