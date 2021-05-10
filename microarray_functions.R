@@ -23,12 +23,12 @@ headers<-list(
 ### Parse ISAtab
 
 buildTargets <- function(opt) {
-  cat("Reading ISAtab study metadata file..., ",opt$isafile$name, "\n")
+  cat("\nReading ISAtab study metadata file..., ",basename(opt$isa), "\n")
   na_strings = c('NA','na','null','NULL','Null','')
   
   td <- tempdir()
   unlink(list.files(td, full.names = TRUE))
-  unzip(opt$isafile$datapath, exdir = td, junkpaths = FALSE)
+  unzip(opt$isa, exdir = td, junkpaths = FALSE)
   isa <- Risa::readISAtab(path = td)
   
   assay_idx <- which((isa@assay.technology.types == "DNA microarray") & (isa@assay.measurement.types == "transcription profiling"))
@@ -39,7 +39,7 @@ buildTargets <- function(opt) {
     try({files$V2<-table$`Comment[Array Data File Name]`})
     try({files$V3<-table$`Parameter Value[array data file,http://www.ebi.ac.uk/efo/EFO_0004098,EFO]`})
     try({files$V4<-table$`Characteristics[array data file,http://www.ebi.ac.uk/efo/EFO_0004098,EFO]`})
-    opt_files <- limma::removeExt(opt$datafiles$name, ".gz")
+    opt_files <- limma::removeExt(opt$files, ".gz")
     files_match<- as.data.frame(sapply(opt_files,function(x){grepl(x,files)}))
     if (dim(files)[2]==1){
       files_match <- t(which(apply(files_match,2,any)))
