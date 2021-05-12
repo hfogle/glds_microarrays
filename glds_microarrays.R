@@ -35,13 +35,14 @@ if (is.null(opt$glds)){
 ### Get organism annotation package
 options(connectionObserver = NULL)
 organism_table <- read.csv(file = file.path(getwd(),"organisms.csv"), header = TRUE, stringsAsFactors = FALSE)
-ann.dbi <- organism_table$annotations[organism_table$species == opt$organism] # Organism specific gene annotation database
+ann.dbi <- organism_table$annotations[organism_table$species == opt$species] # Organism specific gene annotation database
 ann.dbi=as.character(ann.dbi)
 if(!require(ann.dbi, character.only=TRUE)) {
   BiocManager::install(ann.dbi, ask = FALSE)
   library(ann.dbi, character.only=TRUE)
 }
-cat("\n Organism annotation set loaded: ",ann.dbi,"\n")
+#require(ann.dbi, character.only = TRUE, quietly = TRUE)
+cat("\nOrganism annotation set loaded: ",ann.dbi,"\n")
 
 
 ### Get Study Files
