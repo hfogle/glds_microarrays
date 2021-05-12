@@ -1,9 +1,20 @@
+# Run Rscript command on RStudio glds_microarrays project Terminal or from the command line at the path of glds_microarrays.R
+
+# Output will be sent to a Processed_Data directory in the same path unless redirected by the -o option.
+# For initial testing, the HTML figure outputs are disabled. 
+
+# Test Affymetrix processing with demo_dataset
+# Requires Sub Directory Structure 00-RawData with only the raw data files, and Metadata with an ISA.zip and maybe an annotation file.
+
+Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121
 
 # View script options
 Rscript --vanilla glds_microarrays.R --help
 
-# Test Affymetrix processing with demo_dataset
-Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121
+# Test Affymetrix processing with local files (!!!Wildcards not working!!!)
+Rscript --vanilla glds_microarrays.R --files demo_datasets/GLDS-121/00-RawData/*.CEL --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa demo_datasets/GLDS-121/Metadata/*ISA.zip
+
+
 
 # Test Affymetrix processing by API (not ready yet)
-# Rscript --vanilla glds_microarrays.R --glds GLDS-121
+Rscript --vanilla glds_microarrays.R --glds GLDS-121
