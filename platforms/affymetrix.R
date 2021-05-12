@@ -47,7 +47,7 @@ file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00
 
 ### Generate Raw Data QA HTML Report
 
-#rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
 
 
 ### Background Correction and Normalization
@@ -66,6 +66,7 @@ if (class(raw)=="ExpressionFeatureSet"){
 ### Generate Normalized Data QA HTML Report
 
 #rmarkdown::render("qa_summary_normalized.Rmd")
+rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 
 
 ###  Write out the expression values
