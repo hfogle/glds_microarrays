@@ -1,7 +1,6 @@
 ---
-title: "Raw Data Quality Assessment"
 author: "NASA GeneLab Project"
-date: "4/28/2021"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -9,8 +8,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
-### Print GLDS, Platform, Probe Annotation, Organism, Org Annotation, File format
+# `r opt$glds` Raw Data QA Summary
+#### `r Sys.Date()`
+#### Organism: `r opt$species`
+#### Platform: `r opt$platform` Microarray `r class(raw)`
+```{r echo=FALSE}
 show(raw)
 ```
 
@@ -20,149 +22,58 @@ show(raw)
 ```
 
 ## Raw Data MA Plots
-```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
- 
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
-setwd(path)
+```{r eval=(plots == "OLIGO"), echo=FALSE}
 count <- dim(targets$t1)[1]
-printrows <- ceiling(count/4)
-width <- 2000
-png(filename = file.path(path,"rawPlotMA.png"), width = width, height = ceiling(width/4)*printrows)
-par(mfrow = c(printrows,4),mar=c(5,5,5,5))
-for (i in 1:count){
-  oligo::MAplot(raw,which=i, pairs=FALSE)
-  }
-invisible(dev.off())
+printrows <- ceiling(count/2)
+par(mfrow = c(printrows,2))
 for (i in 1:count){
   oligo::MAplot(raw,which=i, pairs=FALSE)
   }
 
-rm(path,printrows,width,count,i)
 ```
-
-```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
- 
-dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
+```{r eval=(plots == "LIMMA"), echo=FALSE}
 count <- dim(targets$t1)[1]
-printrows <- ceiling(count/4)
-width <- 2000
-png(filename = file.path(path,"rawPlotMA.png"), width = width, height = ceiling(width/4)*printrows)
-par(mfrow = c(printrows,4),mar=c(5,5,5,5))
+printrows <- ceiling(count/2)
+par(mfrow = c(printrows,2)) 
 for (i in 1:count){
-  oligo::MAplot(raw,which=i, pairs=FALSE)
-  }
-invisible(dev.off())
-for (i in 1:count){
-  oligo::MAplot(raw,which=i, pairs=FALSE)
+  limma::plotMD(raw, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(raw)[i])
   }
 
-rm(path,printrows,width,count,i)
 ```
-
-```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
- 
-dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-count <- dim(targets$t1)[1]
-printrows <- ceiling(count/4)
-width <- 2000
-png(filename = file.path(path,"rawPlotMA.png"), width = width, height = ceiling(width/4)*printrows)
-par(mfrow = c(printrows,4),mar=c(5,5,5,5))
-for (i in 1:count){
-  plotMD(raw, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(raw)[i])
-  }
-invisible(dev.off())
-for (i in 1:count){
-  plotMD(raw, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(raw)[i])
-  }
-
-rm(path,printrows,width,count,i)
-```
-
 
 ## Raw Data Density Plot
-```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-count <- dim(targets$t1)[1]
-if (opt$format == "Affymetrix ST"){
+```{r eval=(plots == "OLIGO"), echo=FALSE}
+
+if (class(raw)=="ExonFeatureSet" || class(raw)=="GeneFeatureSet"){
   oligo::hist(raw, main = paste0(opt$glds," Raw Intensity Distributions"), target="probeset",xlab="Intentisty",ylab="Density",col=rainbow(count),lty=1)
   legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-  png(file = "rawDensityDistributions.png", width = 1000, height = 800)
-  oligo::hist(raw, main = paste0(opt$glds," Raw Intensity Distributions"), target="probeset",xlab="Intentisty",ylab="Density",col=rainbow(count),lty=1)
-  legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-  invisible(dev.off())
-  
 }else{
   oligo::hist(raw, main = paste0(opt$glds," Raw Intensity Distributions"),xlab="Intentisty",ylab="Density",col=rainbow(count),lty=1)
   legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-  png(file = "rawDensityDistributions.png", width = 1000, height = 800)
-  oligo::hist(raw, main = paste0(opt$glds," Raw Intensity Distributions"),xlab="Intentisty",ylab="Density",col=rainbow(count),lty=1)
-  legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-  invisible(dev.off())
-  
 }
 
 ```
+```{r eval=(plots == "LIMMA"), echo=FALSE}
 
-```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-count <- dim(targets$t1)[1]
 plotDensities(raw, legend = FALSE)
 legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-png(file = "rawDensityDistributions.png", width = 1000, height = 800)
-plotDensities(raw, legend = FALSE)
-legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
-invisible(dev.off())
-  
+
 ```
+
 ## Raw Data Box Plot
-```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
-
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-
-if (opt$format == "Affymetrix ST"){
-png(filename = file.path(path,"rawBoxplot.png"), width = 1000, height = 1000)
-  par(mar=c(30,5,5,5))
+```{r eval=(plots == "OLIGO"), echo=FALSE}
+if (class(raw)=="ExonFeatureSet" || class(raw)=="GeneFeatureSet"){
 oligo::boxplot(raw,which="pm",transfo=log2, nsample=10000,main=paste0(opt$glds," Raw Data Log2 Intensities"), las=2,outline=FALSE,ylab = "log2 Intensities", target="probeset")
-invisible(dev.off())
-  
-oligo::boxplot(raw,which="pm",transfo=log2, nsample=10000,main=paste0(opt$glds," Raw Data Log2 Intensities"), las=2,outline=FALSE,ylab = "log2 Intensities", target="probeset")
-  
 }else{
-png(filename = file.path(path,"rawBoxplot.png"), width = 1000, height = 1000)
-  par(mar=c(30,5,5,5))
 oligo::boxplot(raw,which="pm",transfo=log2, nsample=10000,main=paste0(opt$glds," Raw Data Log2 Intensities"), las=2,outline=FALSE,ylab = "log2 Intensities")
-invisible(dev.off())
-  
-oligo::boxplot(raw,which="pm",transfo=log2, nsample=10000,main=paste0(opt$glds," Raw Data Log2 Intensities"), las=2,outline=FALSE,ylab = "log2 Intensities")
-  
 }
 ```
-
-```{r eval=(plots == "LIMMA"), echo=(plots == "LIMMA")}
-
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-
-png(filename = file.path(path,"rawBoxplot.png"), width = 1000, height = 1000)
-  par(mar=c(30,5,5,5))
-boxplot(data.frame(log2(as.matrix(raw))),main="Raw Data Log2 Intensities", las=2,outline=FALSE)
-invisible(dev.off())
-  
+```{r eval=(plots == "LIMMA"), echo=FALSE}
 boxplot(data.frame(log2(as.matrix(raw))),main="Raw Data Log2 Intensities", las=2,outline=FALSE)
 ```
 
 ## Raw Data PCA Plot
-```{r}
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-########## Create Raw PCA Plots
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 try(exp_raw <- log2(exprs(raw)))
 try(exp_raw <- log2(as.matrix(raw)))
@@ -176,71 +87,35 @@ PCA_plot <- ggplot(dataGG, aes(PC1, PC2)) +
   ggtitle("Raw Data PCA Plot of log2 Expression") +
   xlab(paste0("PC1, VarExp: ", percentVar[1], "%")) +
   ylab(paste0("PC2, VarExp: ", percentVar[2], "%"))
-png(filename = file.path(path,"rawPCA.png"), width = 800, height = 600)
 plot(PCA_plot)
-dev.off()
-plot(PCA_plot)
-#write.csv(PCA_raw$x, file = "visualization_PCA_table.csv")
-rm(exp_raw, PCA_raw,dataGG, PCA_plot,percentVar,sd_ratio)
+
+path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
+setwd(path)
+write.csv(PCA_raw$x, file = "visualization_PCA_table.csv")
+rm(exp_raw, PCA_raw,dataGG, PCA_plot,percentVar,sd_ratio,path)
 ```
 
 ## Array Spot Log Intensity Images
-```{r eval=(plots == "OLIGO"),echo=(plots == "OLIGO")}
-########## Create Array Image Plots
-dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","Images"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","Images")
-setwd(path)
-count <- dim(targets$t1)[1]
-printrows <- ceiling(count/4)
-width <- 2000
-#par(mfrow = c(printrows,4),mar=c(5,5,5,5))
+```{r eval=(plots == "OLIGO"),echo=FALSE}
+
+par(mfrow = c(printrows,2))
 for (i in 1:count){
-  png(file = paste0(targets$t1$SampleName[i],".png"), width = width, height = ceiling(width/4)*printrows)
   oligo::image(raw, transfo=log2, which=i)
-  invisible(dev.off())
   }
-
-for (i in 1:count){
-  oligo::image(raw, transfo=log2,which=i)
-  }
-rm(path,printrows,width,count,i)
 ```
-
-```{r eval=(plots == "LIMMA"),echo=(plots == "LIMMA")}
-########## Create Array Image Plots
-dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","Images"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","Images")
-setwd(path)
-count <- dim(targets$t1)[1]
-printrows <- ceiling(count/4)
-width <- 2000
-
-
-
+```{r eval=(plots == "LIMMA"),echo=FALSE}
+par(mfrow = c(printrows,2))
 for (ind in 1:count){
-
-  if (opt$format == "Agilent"){
+  if (opt$platform == "Agilent"){
   r <- raw$genes$Row
   c <- raw$genes$Col
   nr <- max(r)
   nc <- max(c)
-  
   i <- (r-1)*nc+c
   y <- rep(NA,length(i))
   y[i] <- log2(raw$Eb[,ind])
   raw$printer <- list(ngrid.r=1,ngrid.c=1,nspot.r=nr,nspot.c=nc) 
 }
-  png(file = paste0(targets$t1$SampleName[ind],".png"), width = 500, height = 400)
   imageplot(y,raw$printer, main=colnames(raw$Eb)[ind])
-  invisible(dev.off())
   }
-
-
-rm(path,printrows,width,count,i)
 ```
-
-
-
-
-
-
