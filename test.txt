@@ -6,7 +6,7 @@
 # Test Affymetrix processing with demo_dataset
 # Requires Sub Directory Structure 00-RawData with only the raw data files, and Metadata with an ISA.zip and maybe an annotation file.
 
-Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121
+Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 > GLDS-121.log 2>&1
 
 # View script options
 Rscript --vanilla glds_microarrays.R --help
