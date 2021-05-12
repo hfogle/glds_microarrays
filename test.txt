@@ -12,7 +12,7 @@ Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Ara
 Rscript --vanilla glds_microarrays.R --help
 
 # Test Affymetrix processing with local files (!!!Wildcards not working!!!)
-Rscript --vanilla glds_microarrays.R --files demo_datasets/GLDS-121/00-RawData/*.CEL --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa demo_datasets/GLDS-121/Metadata/*ISA.zip
+Rscript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-121/00-RawData/*.CEL" --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa demo_datasets/GLDS-121/Metadata/*ISA.zip --probe demo_datasets/GLDS-121/Metadata/*annotation*
 
 
 
