@@ -11,7 +11,7 @@ option_list = list(
   make_option(c("-p", "--probe"), type="character", default=NULL, 
               help="Probe annotation file path", metavar="character"),
   make_option(c("-s", "--species"), type="character", default=NULL, 
-              help="Specify organism species", metavar="character"),
+              help="Specify organism species (e.g. Arabidopsis thaliana)", metavar="character"),
   make_option(c("-a", "--annotation"), type="character", default=NULL, 
               help="Organism annotation file path", metavar="character"),
   make_option(c("-g", "--glds"), type="character", default=NULL, 
