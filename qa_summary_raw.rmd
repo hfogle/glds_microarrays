@@ -22,6 +22,26 @@ show(raw)
 ## Raw Data MA Plots
 ```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
  
+path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
+setwd(path)
+count <- dim(targets$t1)[1]
+printrows <- ceiling(count/4)
+width <- 2000
+png(filename = file.path(path,"rawPlotMA.png"), width = width, height = ceiling(width/4)*printrows)
+par(mfrow = c(printrows,4),mar=c(5,5,5,5))
+for (i in 1:count){
+  oligo::MAplot(raw,which=i, pairs=FALSE)
+  }
+invisible(dev.off())
+for (i in 1:count){
+  oligo::MAplot(raw,which=i, pairs=FALSE)
+  }
+
+rm(path,printrows,width,count,i)
+```
+
+```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
+ 
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports"), showWarnings = FALSE)
 path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
 setwd(path)
@@ -62,17 +82,6 @@ for (i in 1:count){
 rm(path,printrows,width,count,i)
 ```
 
-```{r include=FALSE}
-# Create Array Info File
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-
-
-fileConn<-file("arrayInfo.txt")
-try(writeLines(c(opt$format, opt$probefile$name),fileConn))
-try(writeLines(c(raw@manufacturer,raw@annotation), fileConn))
-close(fileConn)
-```
 
 ## Raw Data Density Plot
 ```{r eval=(plots == "OLIGO"), echo=(plots == "OLIGO")}
@@ -235,28 +244,3 @@ rm(path,printrows,width,count,i)
 
 
 
-
-
-
-
-
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
