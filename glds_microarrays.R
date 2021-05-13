@@ -46,42 +46,44 @@ cat("\nOrganism annotation set loaded: ",ann.dbi,"\n")
 
 
 ### Get Study Files
-if (is.null(opt$files)){
-  cat("\nStart processing ",opt$glds, "\n")
+if (!is.null(opt$files)){
+  cat("\nImporting files for:",opt$glds, "\n")
+  opt$files <- Sys.glob(file.path(opt$files))
 }
 
+### Get Files from Curated Directory
 if (!is.null(opt$dir)){
   cat("Building from local curated directory\n")
   opt$isa <- list.files(file.path(getwd(),opt$dir,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
   opt$probe <- list.files(file.path(getwd(),opt$dir,"Metadata"),pattern = "*annotation*", full.names = TRUE)
   opt$files <- list.files(file.path(getwd(),opt$dir,"00-RawData"),full.names = TRUE)
   str(opt)
-  
-  tempin <- tempdir()
-  unlink(list.files(tempin, full.names = TRUE))
-  dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
-  file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-  opt$files <- list.files(file.path(tempin,"00-RawData"),full.names = TRUE)
-  dir.create(file.path(tempin,"Metadata"),showWarnings = FALSE)
-  file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-  opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
-  file.copy(from = opt$probe, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-  opt$probe <- list.files(file.path(tempin,"Metadata"),pattern = "*annotation*", full.names = TRUE)
 }
 
+### Copy files to temp directory
+tempin <- tempdir()
+unlink(list.files(tempin, full.names = TRUE))
+dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
+file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+opt$files <- list.files(file.path(tempin,"00-RawData"),full.names = TRUE)
+dir.create(file.path(tempin,"Metadata"),showWarnings = FALSE)
+file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
+file.copy(from = opt$probe, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+opt$probe <- list.files(file.path(tempin,"Metadata"),pattern = "*annotation*|GPL*", full.names = TRUE)
 
 ### Determine Platform
 
 ### Selects appropriate package for plots
-plots <- NULL
-if ((opt$platform == "Affymetrix") | (opt$platform == "NimbleGen")){
+
+if ((opt$platform == "Affymetrix") | (opt$platform == "Nimblegen 1-channel")){
   plots <- "OLIGO"
-}else if((opt$platform == "Illumina BeadChip") | (opt$platform == "Agilent") | (opt$platform == "Agilent GenePix")){
+}else if((opt$platform == "Illumina Expression") | (opt$platform == "Agilent 1-channel") | (opt$platform == "Agilent 2-channel") | (opt$platform == "Nimblegen 2-channel")){
   plots <- "LIMMA"
 }else {
   plots <- NULL
 }
-cat("\nPlots generate by package ",plots,"\n")
+cat("\nPlots generate by package:",plots,"\n")
 
 ### Parse ISA
 
@@ -101,9 +103,9 @@ str(targets)
 
 if(opt$platform=="Affymetrix"){
   source(file.path(getwd(),"platforms","affymetrix.R"))
-}else if(opt$platform=="agilent_one_channel"){
+}else if(opt$platform=="Agilent 1-channel"){
   source(file.path(getwd(),"platforms","agilent_one_channel.R"))
-}else if(opt$platform=="agilent_two_channel"){
+}else if(opt$platform=="Agilent 2-channel"){
   source(file.path(getwd(),"platforms","agilent_two_channel.R"))
 }else{
   print_help(opt_parser)
