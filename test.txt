@@ -3,18 +3,68 @@
 # Output will be sent to a Processed_Data directory in the same path unless redirected by the -o option.
 # For initial testing, the HTML figure outputs are disabled. 
 
+# View script options
+Rscript --vanilla glds_microarrays.R --help
+
+############################
 # Test Affymetrix processing with demo_dataset
 # Requires Sub Directory Structure 00-RawData with only the raw data files, and Metadata with an ISA.zip and maybe an annotation file.
 
 Rscript --vanilla glds_microarrays.R --dir demo_datasets/GLDS-121 --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 > GLDS-121.log 2>&1
 
-# View script options
-Rscript --vanilla glds_microarrays.R --help
+# Test Affymetrix processing with local files 
+Rscript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-121/00-RawData/*.CEL" --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa demo_datasets/GLDS-121/Metadata/*ISA.zip --probe demo_datasets/GLDS-121/Metadata/*annotation* > GLDS-121.log 2>&1
 
-# Test Affymetrix processing with local files (!!!Wildcards not working!!!)
-Rscript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-121/00-RawData/*.CEL" --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa demo_datasets/GLDS-121/Metadata/*ISA.zip --probe demo_datasets/GLDS-121/Metadata/*annotation*
+############################
+# Test Agilent 2-channel
+RScript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-123/00-RawData/*.GPR" --species "Danio rerio" --platform "Agilent 2-channel" --glds GLDS-123 --isa demo_datasets/GLDS-123/Metadata/*ISA.zip --probe demo_datasets/GLDS-123/Metadata/GPL* > GLDS-123.log 2>&1
+
+############################
+Output Structure
+
+GLDS-???
+  00-RawData
+    SampleName*.CEL.gz (multile files. file extension is platform specific. eg. CEL, raw.txt, GPR, XYS, PAIR)
+    raw_qa.html
+    visualization_PCA_table.csv
+  01-NormalizedData
+    normalized-annotated.rda
+    normalized-annotated.txt.gz
+    normalized.txt.gz
+    normalized_qa.html
+    visualization_PCA_table.csv
+  02-Limma_DGE
+    contrasts.csv
+    differential_expression.csv.gz
+    visualization_output_table.csv.gz
+  Metadata
+    *annotation* (file extension is platform specific. e.g. ADF, GPL, tar.gz)
+    ISA.zip
 
 
 
-# Test Affymetrix processing by API (not ready yet)
-Rscript --vanilla glds_microarrays.R --glds GLDS-121
+############################
+Platforms
+
+Affymetrix
+Agilent 1-channel
+Agilent 2-channel
+Nimblegen 1-channel
+Nimblegen 2-channel
+Illumina Expression
+Generic 1-channel
+Generic 2-channel
+
+############################
+Organisms
+
+"Homo sapiens"
+"Mus musculus"
+"Rattus norvegicus"
+"Danio rerio"
+"Drosophila melanogaster"
+"Caenorhabditis elegans"
+"Saccharomyces cerevisiae"
+"Arabidopsis thaliana"
+"Escherichia coli"
+"Bacillus subtilis"
