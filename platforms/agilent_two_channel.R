@@ -2,6 +2,9 @@
 
 ### Import Raw Data
 
+cat("\nStarting Agilent 2-channel Processing Pipeline\n")
+stop("Execution halted at line 6",call. = TRUE)
+
 library(limma)
 path <- dirname(opt$datafiles$datapath[1])
 files_in_assay <- sapply(targets$t1$FileName,function(x) grep(x,opt$datafiles$name))
