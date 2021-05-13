@@ -1,0 +1,19 @@
+#### TO DO ####
+
+* zip large files on exit
+
+* create batch_microarrays.sh shell script
+    * 
+    * use Jonathans staging script to pull metadata
+    * detect platform by extensions headers
+    * detect species
+    * detect 1/2 channels
+    * detect raw data files
+    * detect probe annotation files
+    * detect isa file and update from staging corrections
+    
+* update conda_environment.json
+
+* render dge_summary.html
+    * use old results table
+    * use old annotation and filter stats
