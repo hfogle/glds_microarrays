@@ -25,7 +25,7 @@ show(raw)
 ```{r eval=(plots == "OLIGO"), echo=FALSE}
 count <- dim(targets$t1)[1]
 printrows <- ceiling(count/2)
-par(mfrow = c(printrows,2))
+#par(mfrow = c(printrows,2),mar=c(1,1,1,1))
 for (i in 1:count){
   oligo::MAplot(raw,which=i, pairs=FALSE)
   }
@@ -34,7 +34,7 @@ for (i in 1:count){
 ```{r eval=(plots == "LIMMA"), echo=FALSE}
 count <- dim(targets$t1)[1]
 printrows <- ceiling(count/2)
-par(mfrow = c(printrows,2)) 
+#par(mfrow = c(printrows,2),mar=c(1,1,1,1)) 
 for (i in 1:count){
   limma::plotMD(raw, column = i, xlab = "Average log-expression", ylab = "log-fold-change", main = colnames(raw)[i])
   }
@@ -98,13 +98,13 @@ rm(exp_raw, PCA_raw,dataGG, PCA_plot,percentVar,sd_ratio,path)
 ## Array Spot Log Intensity Images
 ```{r eval=(plots == "OLIGO"),echo=FALSE}
 
-par(mfrow = c(printrows,2))
+#par(mfrow = c(printrows,2),mar=c(1,1,1,1))
 for (i in 1:count){
   oligo::image(raw, transfo=log2, which=i)
   }
 ```
 ```{r eval=(plots == "LIMMA"),echo=FALSE}
-par(mfrow = c(printrows,2))
+#par(mfrow = c(printrows,2),mar=c(1,1,1,1))
 for (ind in 1:count){
   if (opt$platform == "Agilent"){
   r <- raw$genes$Row
