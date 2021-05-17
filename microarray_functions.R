@@ -25,7 +25,7 @@ headers<-list(
 buildTargets <- function(opt) {
   cat("\nReading ISAtab study metadata file..., ",basename(opt$isa), "\n")
   na_strings = c('NA','na','null','NULL','Null','')
-  
+  library(Risa, quietly = TRUE)
   td <- tempdir()
   unlink(list.files(td, full.names = TRUE))
   unzip(opt$isa, exdir = td, junkpaths = FALSE)
