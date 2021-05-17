@@ -14,20 +14,7 @@ str(opt$files)
 
 workdir <- opt$out
 
-### Import Probe Data
-if (!is.null(opt$probe)){
-  options(connectionObserver = NULL)
-  database <- sub('\\.annotation.tar.gz$', '', basename(opt$probe)) 
-  if(!require(database, character.only=TRUE)) {
-    BiocManager::install(database, ask = FALSE)
-  }
-  install.packages(opt$probe,repos = NULL, verbose = FALSE, quiet = TRUE)
-  library(database, character.only=TRUE)
-  cat("\nLoading local probe annotation database: ",database,"\n")
-  
-}else {
-  database <- ann.dbi
-}
+
 
 raw <- oligo::read.celfiles(opt$files)
 cat("\nAffymetrix platform subtype: ",class(raw),"\n")
@@ -46,8 +33,9 @@ file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00
 
 
 ### Generate Raw Data QA HTML Report
-
-rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+}
 
 
 ### Background Correction and Normalization
@@ -65,8 +53,9 @@ if (class(raw)=="ExpressionFeatureSet"){
 
 ### Generate Normalized Data QA HTML Report
 
-#rmarkdown::render("qa_summary_normalized.Rmd")
-rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+}
 
 
 ###  Write out the expression values
@@ -75,11 +64,34 @@ setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 expression <- data.frame(Biobase::exprs(data))
 write.table(expression,"normalized.txt",quote=FALSE, append=FALSE, sep = "\t", col.names=NA)
 
-
-
+### Import Probe Data
+if (length(opt$probe >= 1)){
+  options(connectionObserver = NULL)
+  database <- sub('\\.annotation.tar.gz$', '', basename(opt$probe)) 
+  cat("\nLoading local probe annotation database: ",database,"\n")
+  if(!require(database, character.only=TRUE)) {
+    BiocManager::install(database, ask = FALSE)
+  }
+  install.packages(opt$probe,repos = NULL, verbose = FALSE, quiet = TRUE)
+  library(database, character.only=TRUE)
+  
+  
+}else {
+  package <- raw@annotation
+  package <- gsub("pd.","",package)
+  package <- gsub(".v1","probeset",package)
+  package <- gsub("[.]","",package)
+  package <- paste0(package,".db")
+  database <- package
+  cat("\nSearch for package: ",database)
+  if(!require(database, character.only=TRUE)) {
+    BiocManager::install(database, ask = FALSE)
+  }
+  library(database, character.only=TRUE)
+}
 keytype<-"PROBEID"
 keys<-rownames(expression)
-annotation(data)<-database
+
 
 ### Map assay database annotations
 annotation <- data.frame(REFSEQ=mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "REFSEQ",multiVals = "first"))
