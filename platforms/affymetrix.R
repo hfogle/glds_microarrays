@@ -79,7 +79,7 @@ if (length(opt$probe >= 1)){
 }else {
   package <- raw@annotation
   package <- gsub("pd.","",package)
-  package <- gsub(".v1","probeset",package)
+  package <- gsub(".v1","transcriptcluster",package)
   package <- gsub("[.]","",package)
   package <- paste0(package,".db")
   database <- package
