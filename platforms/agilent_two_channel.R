@@ -5,6 +5,13 @@
 cat("\nStarting Agilent 2-channel Processing Pipeline\n")
 stop("Execution halted at line 6",call. = TRUE)
 
+filetypes <- unique(toupper(tools::file_ext(list.files(file.path(tempin,"00-RawData")))))
+if (length(filetypes)>1){
+  cat("\nFiletypes\n",filetypes)
+  stop("Execution halted due to multiple filetypes present for raw data")
+}
+
+
 library(limma)
 path <- dirname(opt$datafiles$datapath[1])
 files_in_assay <- sapply(targets$t1$FileName,function(x) grep(x,opt$datafiles$name))
