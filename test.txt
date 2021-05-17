@@ -17,7 +17,7 @@ Rscript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-121/00-RawData/
 
 ############################
 # Test Agilent 2-channel
-RScript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-123/00-RawData/*.GPR" --species "Danio rerio" --platform "Agilent 2-channel" --glds GLDS-123 --isa demo_datasets/GLDS-123/Metadata/*ISA.zip --probe demo_datasets/GLDS-123/Metadata/GPL* > GLDS-123.log 2>&1
+RScript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-123/00-RawData/*.gpr" --species "Danio rerio" --platform "Agilent 2-channel" --glds GLDS-123 --isa demo_datasets/GLDS-123/Metadata/*ISA.zip --probe demo_datasets/GLDS-123/Metadata/GPL* > GLDS-123.log 2>&1
 
 ############################
 Output Structure
@@ -68,3 +68,11 @@ Organisms
 "Arabidopsis thaliana"
 "Escherichia coli"
 "Bacillus subtilis"
+
+############################
+Data on LBL servers
+/data2/Data_Processing/Microarray_Datasets/GLDS_datasets
+
+############################
+Microarray Dataset Status Page
+https://genelab-tools.arc.nasa.gov/confluence/display/GL/Microarray+Dataset+Status
