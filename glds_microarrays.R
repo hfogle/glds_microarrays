@@ -6,6 +6,8 @@ library("optparse")
 option_list = list(
   make_option(c("-f", "--files"), type="character", default=NULL, 
               help="Dataset file paths", metavar="character"),
+  make_option(c("-r", "--reports"), action="store_true", default=FALSE, 
+              help="Generate QA HTML Reports"),
   make_option(c("-i", "--isa"), type="character", default=NULL, 
               help="Study ISAtab.zip file path", metavar="character"),
   make_option(c("-p", "--probe"), type="character", default=NULL, 
