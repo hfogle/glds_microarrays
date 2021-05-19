@@ -3,7 +3,6 @@
 ### Import Raw Data
 
 cat("\nStarting Agilent 2-channel Processing Pipeline\n")
-stop("Execution halted at line 6",call. = TRUE)
 
 filetypes <- unique(toupper(tools::file_ext(list.files(file.path(tempin,"00-RawData")))))
 if (length(filetypes)>1){
@@ -11,57 +10,61 @@ if (length(filetypes)>1){
   stop("Execution halted due to multiple filetypes present for raw data")
 }
 
+cat("\n Filetype: ",filetypes, "\n")
 
+workdir <- opt$out
 library(limma)
-path <- dirname(opt$datafiles$datapath[1])
-files_in_assay <- sapply(targets$t1$FileName,function(x) grep(x,opt$datafiles$name))
-files_in_assay <- opt$datafiles$name[files_in_assay]
 
-if (opt$format=="GPR"){
-  RG <- read.maimages(files_in_assay, source="genepix", path=path,wt.fun=wtflags(weight=0,cutoff=-50))
-}else if (opt$format=="TXT"){
-  RG <- read.maimages(files_in_assay, source="agilent", path=path)
+if (filetypes=="GPR"){
+  RG <- read.maimages(basename(opt$files), source="genepix", path=file.path(tempin,"00-RawData"),wt.fun=wtflags(weight=0,cutoff=-50))
+}else if (filetypes=="TXT" || filetypes=="RAW.TXT"){
+  RG <- read.maimages(basename(opt$files), source="agilent", path=file.path(tempin,"00-RawData"))
+}else{
+  stop("Unsupported file extension.")
 }
 
 dir.create(file.path(workdir,"Processed_Data"), showWarnings = FALSE)
 dir.create(file.path(workdir,"Processed_Data",opt$glds), showWarnings = FALSE)
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), showWarnings = FALSE)
 path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
-file.copy(from = opt$datafiles$datapath, to = file.path(path,opt$datafiles$name), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-rm(path)
+file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+
 
 
 ### Import Probe Annotation
 
-if (grepl("\\.soft$", opt$probefile$name) || grepl("\\.gpl.txt$", opt$probefile$name)){
-    probedata<- GEOquery:::parseGPL(opt$probefile$datapath)
-    probedata<- probedata@dataTable@table
-    probedata <- probedata[with(probedata, order(ROW,COL)),] # sort by row & col to match RG order
-    RG$genes <- dplyr::left_join(RG$genes,probedata,by = c("Name" = "NAME"))
-} 
+# if (grepl("\\.soft$", opt$probe) || grepl("\\.gpl.txt$", opt$probe) || grepl("GPL",opt$probe)){
+#     probedata<- GEOquery:::parseGPL(opt$probe)
+#     probedata<- probedata@dataTable@table
+#     probedata <- probedata[with(probedata, order(ROW,COL)),] # sort by row & col to match RG order
+#     cat("\nLocal GPL probe annotation imported\n")
+#     RG$genes <- dplyr::left_join(RG$genes,probedata,by = c("Name" = "NAME"))
+# } else if (grepl("\\.adf.txt$", opt$probe)){
+#   probedata<- ArrayExpress:::readFeatures(opt$probefile$name, dirname(opt$probefile$datapath),ArrayExpress:::skipADFheader(opt$probefile$name, dirname(opt$probefile$datapath),proc=F))
+#   cat("\nLocal ADF probe annotation imported\n")
+# }else{
+#   cat("\nAnnotation will be attempted with raw file ID keys\n")
+# }
 
-if (grepl("\\.adf.txt$", opt$probefile$name)){
-  probedata<- ArrayExpress:::readFeatures(opt$probefile$name, dirname(opt$probefile$datapath),ArrayExpress:::skipADFheader(opt$probefile$name, dirname(opt$probefile$datapath),proc=F))
-  
-}
-
-### Import Organism Annotation
-keytype = opt$primary
-organism_table <- read.csv(file = file.path(getwd(),"organisms.csv"), header = TRUE, stringsAsFactors = FALSE)
-ann.dbi <- organism_table$annotations[organism_table$species == opt$organism] # Organism specific gene annotation database
-ann.dbi=as.character(ann.dbi)
-if(!require(ann.dbi, character.only=TRUE)) {
-  BiocManager::install(ann.dbi, ask = FALSE)
-  library(ann.dbi, character.only=TRUE)
-}
 
 ### Map Annotations from Primary Keytype
 try(annotation<-data.frame(ID=RG$genes$ID)) #assumes Array ID is primary annotation
 try(annotation<-data.frame(ID=RG$genes$GeneName))
-try(annotation<-data.frame(ID=RG$genes[,keytype]))
 try(annotation<-data.frame(ID=RG$genes$Name)) #assumes Array ID is primary annotation
 annotation$ID <- sub("\\.\\d+", "", annotation$ID) #remove any version suffixes from IDs
 
+keytype <- NULL
+testout <- NULL
+testkeys <- annotation$ID[100:200]
+cat("\nTesting keys against available keytypes.\n")
+for(annkey in columns(eval(parse(text = ann.dbi)))){
+  try(testout<-mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = testkeys,keytype = annkey, column = "ENTREZID",multiVals = "first"))
+  if(length(testout)>10){
+    keytype<-annkey
+    cat("\nKeytype identified: ",keytype,"\n")
+    break;
+  }
+}
 try(annotation$REFSEQ<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "REFSEQ",multiVals = "first")))
 try(annotation$ENSEMBL<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "ENSEMBL",multiVals = "first")))
 try(annotation$SYMBOL<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "SYMBOL",multiVals = "first"))) #GENENAME
@@ -90,43 +93,44 @@ RG.annotated <- RG
 ### Background Correction and Normalization
 
 RG.annotated <- backgroundCorrect(RG.annotated, method="normexp", offset=50,normexp.method="saddle")
+cat("\nBackground correction by NormExp\n")
 MA <- normalizeWithinArrays(RG.annotated, method="loess", weights = RG.annotated$weights)
+cat("\nWithin Array Normalization by Loess\n")
 MA <- normalizeBetweenArrays(MA, method="Aquantile")
+cat("\nBetween array normalization by Aquantile\n")
 MA.summarized <- MA
 MA.summarized$genes<-annotation.subset
 
 
 ### Filter out Control Probes
-if (opt$filter_control){
-  #try(MA.summarized <- MA.summarized[annotation1$CONTROL_TYPE == FALSE,])
-  try({
-    filter <- which(!(MA.summarized$genes$CONTROLTYPE %in% c("pos","neg")))
+try({
+    filter <- which(!(MA.summarized$genes$CONTROLTYPE %in% c("DarkCorner","GE_BrightCorner","NegativeControl")))
     MA.summarized<- MA.summarized[filter,]
     annotation.subset <- annotation.subset[filter,]})
-}
+
 
 ### Filter out Non-annotated Probes
-if (opt$filter_nonannotated){
-  try({
+
+try({
     MA.summarized <- MA.summarized[!is.na(MA.summarized$genes$ENTREZID),]
     annotation.subset <- MA.summarized$genes
-    annotation_stats$annotated_genes <- dim(MA.summarized)[1]
+    #annotation_stats$annotated_genes <- dim(MA.summarized)[1]
   })
-}
+
 
 
 ### Generate Gene Summary Values
 
 MA.summarized <- avereps(MA.summarized, ID = MA.summarized$genes$ID)
 annotation.subset <- MA.summarized$genes
-annotation_stats$unique_probes <- dim(MA.summarized)[1]
+#annotation_stats$unique_probes <- dim(MA.summarized)[1]
 
 ###  Generate Expression Value  Files
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"), showWarnings = FALSE)
 setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 
 #annotation.subset <- dplyr::select(MA.summarized$genes, contains(c("ID")))
-colnames(annotation.subset)[1]<-opt$primary
+#colnames(annotation.subset)[1]<-opt$primary
 #annotation.subset <-apply(annotation.subset, 1, unlist)
 expression <- as.data.frame(MA.summarized$M)
 write.table(expression,"normalized.txt",quote=FALSE, append=FALSE, sep = "\t", col.names=NA)
