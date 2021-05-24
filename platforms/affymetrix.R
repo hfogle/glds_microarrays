@@ -31,6 +31,12 @@ dir.create(file.path(workdir,"Processed_Data",opt$glds), showWarnings = FALSE)
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), showWarnings = FALSE)
 file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 
+### Create Checksum file
+checksums <- tools::md5sum(opt$files)
+names(checksums) <- basename(opt$files)
+write.table(checksums, file.path(workdir,"Processed_Data",opt$glds,"00-RawData","md5sum.txt"),quote = FALSE)
+
+
 
 ### Generate Raw Data QA HTML Report
 if(opt$reports == TRUE){
