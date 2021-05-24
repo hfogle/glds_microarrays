@@ -37,7 +37,10 @@ checksums <- tools::md5sum(opt$files)
 names(checksums) <- basename(opt$files)
 write.table(checksums, file.path(workdir,"Processed_Data",opt$glds,"00-RawData","md5sum.txt"),quote = FALSE)
 
-
+### Generate Raw Data QA HTML Report
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+}
 
 
 
@@ -48,10 +51,29 @@ data.bgonly <- backgroundCorrect(raw, method="normexp", offset=50)
 data <- normalizeBetweenArrays(data, method="quantile")
 cat("\nNormexp background correction and Quantile normalization performed.\n")
 
+### Normalized QA Report
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+}
+
+### Begin tracking feature annotation stats
+# annotation_stats <- list()
+# annotation_stats$total_features <- dim(data$genes)[1]
+
+###  Write out the expression values
+dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"), showWarnings = FALSE)
+setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+data <- data[data$genes$ControlType == 0,]
+
+expression<-cbind(data$genes$ProbeUID,data$E)
+cat("\n Length expression features: ",dim(expression),"\n")
+write.table(expression,"normalized.txt",quote=FALSE, append=FALSE, sep = "\t")
+
 ### Import Probe Annotation
 
 database<-ann.dbi
 
+cat("\nKey headers: ",colnames(data$genes),"\n")
 keys<-data$genes$SystematicName
 keys <- sub("\\.\\d+", "", keys) #remove any version suffixes from IDs
 keys <- toupper(keys)
@@ -69,21 +91,9 @@ for(annkey in columns(eval(parse(text = ann.dbi)))){
   }
 }
 
-### Begin tracking feature annotation stats
-# annotation_stats <- list()
-# annotation_stats$total_features <- dim(data$genes)[1]
-
-###  Write out the expression values
-dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"), showWarnings = FALSE)
-setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
-data <- data[data$genes$ControlType == 0,]
-
-expression<-cbind(data$genes$ProbeName,data$E)
-write.table(expression,"normalized.txt",quote=FALSE, append=FALSE, sep = "\t")
-
 ### Map assay database annotations
-annotation <- data.frame(REFSEQ=mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "REFSEQ",multiVals = "first"))
-
+annotation <- data.frame(ID=keys)
+try(annotation$REFSEQ<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "REFSEQ",multiVals = "first"))
 try(annotation$ENSEMBL<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "ENSEMBL",multiVals = "first"))
 try(annotation$SYMBOL<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "SYMBOL",multiVals = "first"))
 try(annotation$DESCRIPTION<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "GENENAME",multiVals = "first"))
@@ -100,9 +110,11 @@ try({
   string_cols <- string_cols[!duplicated(string_cols$ENTREZID),]
   annotation <- dplyr::left_join(annotation,string_cols,by="ENTREZID")
   
+  
   rm(string_map,string_db)
 })
 rm(keytype,keys)
+cat("\n Length annotation features: ",dim(annotation),"\n")
 
 ### Generate normalized annotated expression text file
 setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
@@ -113,6 +125,8 @@ write.table(expression,"normalized-annotated.txt",quote=FALSE, append = FALSE, r
 setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 data$annotation<-annotation
 save(data,file = "normalized-annotated.rda")
+
+data.filt <- data
 
 ### Basic linear model fit
 
@@ -160,8 +174,7 @@ setwd(file.path(workdir,"Processed_Data",opt$glds,"02-Limma_DGE"))
 output_table <- fit$genes
 reduced_output_table <- fit$genes
 
-try(expr <- as.data.frame(data.filt$E[keep,]))
-try(expr <- as.data.frame(data.filt@assayData$exprs[rownames(data.filt@assayData$exprs) %in% rownames(fit$genes),]))
+try(expr <- as.data.frame(data.filt$E))
 output_table <- cbind(output_table,expr)
 reduced_output_table <- cbind(reduced_output_table,expr)
 
