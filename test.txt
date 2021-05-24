@@ -20,6 +20,10 @@ Rscript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-121/00-RawData/
 RScript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-123/00-RawData/*.gpr" --species "Danio rerio" --platform "Agilent 2-channel" --glds GLDS-123 --isa demo_datasets/GLDS-123/Metadata/*ISA.zip --probe demo_datasets/GLDS-123/Metadata/GPL* > GLDS-123.log 2>&1
 
 ############################
+# Test Agilent 1-channel
+RScript --vanilla glds_microarrays.R --files "demo_datasets/GLDS-22/00-RawData/*.txt" --species "Arabidopsis thaliana" --platform "Agilent 1-channel" --glds GLDS-22 --isa demo_datasets/GLDS-22/Metadata/*ISA.zip --probe demo_datasets/GLDS-22/Metadata/GPL* > GLDS-22.log 2>&1
+
+############################
 Output Structure
 
 GLDS-???
