@@ -50,7 +50,7 @@ boxplot(data.frame(log2(as.matrix(data))),main=paste0(opt$glds," Normalized Inte
 ```
 
 ## Normalized PCA Plot
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=(targets$labels == 1)}
 library(ggplot2)
 try(exp_raw <- log2(as.matrix(data)))
 try(exp_raw <- log2(exprs(data)))
