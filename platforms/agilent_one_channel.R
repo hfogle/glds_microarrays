@@ -1,63 +1,77 @@
-### Template Microarray Platform Script
+### Agilent One Channel Processing
 
-### 1. Import Raw Data
+### Import Raw Data
+cat("\nStarting Agilent 1-channel Processing Pipeline\n")
 
-for (file in opt$datafiles$datapath){
-  if (grepl("\\.gz$", file)) {
-    R.utils::gunzip(filename = file, remove = TRUE)
-    opt$datafiles$datapath<-list.files(dir(opt$datafiles$datapath))}
+filetypes <- unique(toupper(tools::file_ext(list.files(file.path(tempin,"00-RawData")))))
+if (length(filetypes)>1){
+  cat("\nFiletypes\n",filetypes)
+  stop("Execution halted due to multiple filetypes present for raw data")
 }
-rm(file)
 
-raw<-limma::read.maimages(targets$t1$FileName, source="genepix", path=dirname(datapaths[1]),wt.fun=wtflags(weight=0,cutoff=-50), green.only=TRUE, names = targets$t1$SampleName)
+cat("\n Filetype: ",filetypes, "\n")
 
-raw<-limma::read.maimages(targets$t1$FileName, source="agilent", path=dirname(datapaths[1]), green.only=TRUE, names = targets$t1$SampleName)
+workdir <- opt$out
+library(limma)
 
-### If data imports properly, start building ouput files
+if (filetypes=="GPR"){
+  raw <- read.maimages(basename(opt$files), source="genepix", path=file.path(tempin,"00-RawData"),wt.fun=wtflags(weight=0,cutoff=-50), green.only=TRUE, names = targets$t1$SampleName)
+}else if (filetypes=="TXT" || filetypes=="RAW.TXT"){
+  raw <- read.maimages(basename(opt$files), source="agilent", path=file.path(tempin,"00-RawData"), green.only=TRUE, names = targets$t1$SampleName)
+}else{
+  stop("Unsupported file extension.")
+}
+
+### If data imports properly, start building output files
 
 dir.create(file.path(workdir,"Processed_Data"), showWarnings = FALSE)
 dir.create(file.path(workdir,"Processed_Data",opt$glds), showWarnings = FALSE)
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), showWarnings = FALSE)
 path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
-file.copy(from = datapaths, to = file.path(path,datanames), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-rm(path)
+file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+
 
 ### Create Checksum file
-path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports")
-setwd(path)
-checksums <- tools::md5sum(file.path(workdir,"Processed_Data",opt$glds,"00-RawData", opt$datafiles$name))
-names(checksums) <- datanames
-write.table(checksums, "md5sum.txt",quote = FALSE)
-rm(path,checksums)
+
+checksums <- tools::md5sum(opt$files)
+names(checksums) <- basename(opt$files)
+write.table(checksums, file.path(workdir,"Processed_Data",opt$glds,"00-RawData","md5sum.txt"),quote = FALSE)
 
 
-### Import Organism Annotation
-organism_table <- read.csv(file = file.path(getwd(),"organisms.csv"), header = TRUE, stringsAsFactors = FALSE)
-ann.dbi <- organism_table$annotations[organism_table$species == opt$organism] # Organism specific gene annotation database
-ann.dbi=as.character(ann.dbi)
-if(!require(ann.dbi, character.only=TRUE)) {
-  BiocManager::install(ann.dbi, ask = FALSE)
-  library(ann.dbi, character.only=TRUE)
-}
 
-### Import Probe Annotation
 
-database<-ann.dbi
-keytype<-opt$primary
-keys<-data$genes$SystematicName
-keys <- sub("\\.\\d+", "", keys) #remove any version suffixes from IDs
-keys <- toupper(keys)
 
-### 4. Background Correction and Normalization
+### Background Correction and Normalization
 
 data <- backgroundCorrect(raw, method="normexp", offset=50)
 data.bgonly <- backgroundCorrect(raw, method="normexp", offset=50)
 data <- normalizeBetweenArrays(data, method="quantile")
-cat("Normexp background correction and Quantile normalization performed.")
+cat("\nNormexp background correction and Quantile normalization performed.\n")
+
+### Import Probe Annotation
+
+database<-ann.dbi
+
+keys<-data$genes$SystematicName
+keys <- sub("\\.\\d+", "", keys) #remove any version suffixes from IDs
+keys <- toupper(keys)
+
+keytype <- NULL
+testout <- NULL
+testkeys <- keys[100:200]
+cat("\nTesting keys against available keytypes.\n")
+for(annkey in columns(eval(parse(text = ann.dbi)))){
+  try(testout<-mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = testkeys,keytype = annkey, column = "ENTREZID",multiVals = "first"))
+  if(length(testout)>10){
+    keytype<-annkey
+    cat("\nKeytype identified: ",keytype,"\n")
+    break;
+  }
+}
 
 ### Begin tracking feature annotation stats
-annotation_stats <- list()
-annotation_stats$total_features <- dim(data$genes)[1]
+# annotation_stats <- list()
+# annotation_stats$total_features <- dim(data$genes)[1]
 
 ###  Write out the expression values
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"), showWarnings = FALSE)
@@ -80,7 +94,7 @@ try(annotation$GOSLIM_ID<-mapIds(eval(parse(text = database),env=.GlobalEnv),key
 
 ### Map STRING annotations
 try({
-  string_db <- STRINGdb::STRINGdb$new( version="11", species=organism_table$taxon[organism_table$species == opt$organism],score_threshold=0)
+  string_db <- STRINGdb::STRINGdb$new( version="11", species=organism_table$taxon[organism_table$species == opt$species],score_threshold=0)
   string_map<-string_db$map(annotation,"ENTREZID",removeUnmappedRows = TRUE, takeFirst = TRUE)
   string_cols <-string_map[,c("ENTREZID","STRING_id")]
   string_cols <- string_cols[!duplicated(string_cols$ENTREZID),]
@@ -129,14 +143,14 @@ cont.matrix <- makeContrasts(contrasts = contrasts,levels=design)
 contrast.fit <- contrasts.fit(fit, cont.matrix)
 contrast.fit <- eBayes(contrast.fit)
 results<-decideTests(contrast.fit, method = "separate", adjust.method = "BH", p.value = 0.05, lfc = 0.5) # FDR .05
-try({
-  colnames(results@.Data) <- contrast.names
-  summary <- as.data.frame(summary(results))
-  summary <- summary[,c(2,1,3)]
-  colnames(summary)<-c("CONTRAST","REGULATION","GENE COUNT SIG")
-  DT::datatable(summary, caption = "Summary of Differentially Regulated Genes (P<=05)")
-})
-rm(combos,combos.names,cont.matrix)
+# try({
+#   colnames(results@.Data) <- contrast.names
+#   summary <- as.data.frame(summary(results))
+#   summary <- summary[,c(2,1,3)]
+#   colnames(summary)<-c("CONTRAST","REGULATION","GENE COUNT SIG")
+#   DT::datatable(summary, caption = "Summary of Differentially Regulated Genes (P<=05)")
+# })
+# rm(combos,combos.names,cont.matrix)
 
 ### Construct DGE Output Tables
 
@@ -209,10 +223,11 @@ write.csv(contrast.output,"contrasts.csv")
 
 rm (uu,group__,fit.index,fit.groups,fit.group.names,contrasts,contrast.names)
 
-### Move metadata files
+### Export Metadata files
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"Metadata"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"Metadata")
-file.copy(from = opt[["isafile"]][["datapath"]], to = file.path(path,"ISA.zip"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+path<-file.path(workdir,"Processed_Data",opt$glds,"Metadata")
+setwd(path)
+file.copy(from = opt$isa, to = file.path(path,basename(opt$isa)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+try(file.copy(from = opt$probe, to = file.path(path,basename(opt$probe)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE))
 
-file.copy(from = opt[["probefile"]][["datapath"]], to = file.path(path,opt[["probefile"]][["name"]]), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-rm(path)
+cat("All data files have been written to:  ",file.path(workdir,"Processed_Data",opt$glds))
