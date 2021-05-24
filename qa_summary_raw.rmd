@@ -73,7 +73,7 @@ boxplot(data.frame(log2(as.matrix(raw))),main="Raw Data Log2 Intensities", las=2
 ```
 
 ## Raw Data PCA Plot
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=(targets$labels == 1)}
 library(ggplot2)
 try(exp_raw <- log2(exprs(raw)))
 try(exp_raw <- log2(as.matrix(raw)))
