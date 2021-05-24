@@ -16,9 +16,9 @@ workdir <- opt$out
 library(limma)
 
 if (filetypes=="GPR"){
-  RG <- read.maimages(basename(opt$files), source="genepix", path=file.path(tempin,"00-RawData"),wt.fun=wtflags(weight=0,cutoff=-50))
+  raw <- read.maimages(basename(opt$files), source="genepix", path=file.path(tempin,"00-RawData"),wt.fun=wtflags(weight=0,cutoff=-50))
 }else if (filetypes=="TXT" || filetypes=="RAW.TXT"){
-  RG <- read.maimages(basename(opt$files), source="agilent", path=file.path(tempin,"00-RawData"))
+  raw <- read.maimages(basename(opt$files), source="agilent", path=file.path(tempin,"00-RawData"))
 }else{
   stop("Unsupported file extension.")
 }
@@ -29,7 +29,17 @@ dir.create(file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), showWarnin
 path <- file.path(workdir,"Processed_Data",opt$glds,"00-RawData")
 file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 
+### Create Checksum file
+checksums <- tools::md5sum(opt$files)
+names(checksums) <- basename(opt$files)
+write.table(checksums, file.path(workdir,"Processed_Data",opt$glds,"00-RawData","md5sum.txt"),quote = FALSE)
 
+
+
+### Generate Raw Data QA HTML Report
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+}
 
 ### Import Probe Annotation
 
@@ -48,9 +58,9 @@ file.copy(from = opt$files, to = file.path(workdir,"Processed_Data",opt$glds,"00
 
 
 ### Map Annotations from Primary Keytype
-try(annotation<-data.frame(ID=RG$genes$ID)) #assumes Array ID is primary annotation
-try(annotation<-data.frame(ID=RG$genes$GeneName))
-try(annotation<-data.frame(ID=RG$genes$Name)) #assumes Array ID is primary annotation
+try(annotation<-data.frame(ID=raw$genes$ID)) #assumes Array ID is primary annotation
+try(annotation<-data.frame(ID=raw$genes$GeneName))
+try(annotation<-data.frame(ID=raw$genes$Name)) #assumes Array ID is primary annotation
 annotation$ID <- sub("\\.\\d+", "", annotation$ID) #remove any version suffixes from IDs
 
 keytype <- NULL
@@ -80,21 +90,21 @@ is.na(annotation) <- annotation == "NULL"
 
 ### Map STRING DB annotations
 try({
-  string_db <- STRINGdb::STRINGdb$new( version="11", species=organism_table$taxon[organism_table$species == opt$organism],score_threshold=0)
+  string_db <- STRINGdb::STRINGdb$new( version="11", species=organism_table$taxon[organism_table$species == opt$species],score_threshold=0)
   string_map<-string_db$map(annotation,"REFSEQ",removeUnmappedRows = FALSE, takeFirst = TRUE)
   annotation$STRING_ID <- string_map$STRING_id
   rm(string_map,string_db)
 })
 
 annotation.subset <- annotation
-RG.annotated <- RG
+raw.annotated <- raw
 
 
 ### Background Correction and Normalization
 
-RG.annotated <- backgroundCorrect(RG.annotated, method="normexp", offset=50,normexp.method="saddle")
+raw.annotated <- backgroundCorrect(raw.annotated, method="normexp", offset=50,normexp.method="saddle")
 cat("\nBackground correction by NormExp\n")
-MA <- normalizeWithinArrays(RG.annotated, method="loess", weights = RG.annotated$weights)
+MA <- normalizeWithinArrays(raw.annotated, method="loess", weights = raw.annotated$weights)
 cat("\nWithin Array Normalization by Loess\n")
 MA <- normalizeBetweenArrays(MA, method="Aquantile")
 cat("\nBetween array normalization by Aquantile\n")
@@ -102,11 +112,14 @@ MA.summarized <- MA
 MA.summarized$genes<-annotation.subset
 
 
+cat("\n Initial feature count: ",dim(MA.summarized$genes),"\n")
 ### Filter out Control Probes
+cat("\n MA columns",colnames(MA.summarized$genes))
 try({
-    filter <- which(!(MA.summarized$genes$CONTROLTYPE %in% c("DarkCorner","GE_BrightCorner","NegativeControl")))
+    filter <- which(!(MA.summarized$genes$ID %in% c("DarkCorner","GE_BrightCorner","NegativeControl")))
     MA.summarized<- MA.summarized[filter,]
     annotation.subset <- annotation.subset[filter,]})
+cat("\n Features after control probes removed: ",dim(MA.summarized$genes),"\n")
 
 
 ### Filter out Non-annotated Probes
@@ -117,17 +130,26 @@ try({
     #annotation_stats$annotated_genes <- dim(MA.summarized)[1]
   })
 
+cat("\n Features after unannotated probes removed: ",dim(MA.summarized$genes),"\n")
 
 
 ### Generate Gene Summary Values
 
-MA.summarized <- avereps(MA.summarized, ID = MA.summarized$genes$ID)
-annotation.subset <- MA.summarized$genes
+# MA.summarized <- avereps(MA.summarized, ID = MA.summarized$genes$ID)
+# annotation.subset <- MA.summarized$genes
 #annotation_stats$unique_probes <- dim(MA.summarized)[1]
+
+# MA.summarized$genes <- MA.summarized$genes[,-c("ID")]
+# annotation.subset <- annotation.subset[,-c("ID")]
 
 ###  Generate Expression Value  Files
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"), showWarnings = FALSE)
 setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+
+### Normalized QA Report
+if(opt$reports == TRUE){
+  rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+}
 
 #annotation.subset <- dplyr::select(MA.summarized$genes, contains(c("ID")))
 #colnames(annotation.subset)[1]<-opt$primary
@@ -144,10 +166,10 @@ write.table(expression,"normalized-annotated.txt",quote=FALSE, append=FALSE, sep
 save(MA.summarized,file = "normalized-annotated.rda")
 
 ### Build Differential Gene Expression Model
-setwd(file.path(workdir,"Processed_Data",opt$glds,"00-RawData","QC_Repports"))
+
 library(statmod)
 
-if (opt$model == "Replicate Array"){
+if (targets$design == "Replicate Array"){
  
     uu<-uniqueTargets(targets$t2)
     uuu<-uniqueTargets(targets$t3)
@@ -160,7 +182,7 @@ if (opt$model == "Replicate Array"){
     colnames(results)<-contrast.names[2]
 }
 
-if (opt$model == "Common Reference"){
+if (targets$design == "Common Reference"){
 
     uu<-unique(targets2[,2])
     uuu1<-unique(targets3[,2])
@@ -184,7 +206,7 @@ if (opt$model == "Common Reference"){
     results<-decideTests(contrast.fit, method = "separate", adjust.method = "BH", p.value = 0.05, lfc = 0.5) # FDR .05
 }
   
-if (opt$model == "Separate Channels"){
+if (targets$design == "Separate Channels"){
     targets$t2 <- targetsA2C(targets$t2, channel.codes = c(1,2), channel.columns = list(Target=c("Cy3","Cy5")),grep = FALSE)
     targets$t3 <- targetsA2C(targets$t3, channel.codes = c(1,2), channel.columns = list(Target=c("Cy3","Cy5")),grep = FALSE)
     
@@ -195,22 +217,22 @@ if (opt$model == "Separate Channels"){
     colnames(design) <- uuu
     corfit <- intraspotCorrelation(MA.summarized, design)
     fit <- lmscFit(MA.summarized, design, correlation=corfit$consensus)
-    if (opt$filter_nonexpressed){
-      
-      CutOff <- quantile(fit$Amean,probs=.33)
-      
-      hist_res <- graphics::hist(as.matrix(fit$coefficients), 100, col = "cornsilk", freq = FALSE, 
-                                 main = "Probe Filtering Intensity Cutoff",
-                                 border = "antiquewhite4",
-                                 xlab = "Median intensities")
-      
-      abline(v = CutOff, col = "coral4", lwd = 2)
-      
-      keep <- fit$Amean > CutOff
-      fit <- fit[keep,] # filter out probes below cutoff expression level
-      annotation.subset <- annotation.subset[keep,]
-      MA.summarized <- MA.summarized[keep,]
-    }
+    # if (opt$filter_nonexpressed){
+    #   
+    #   CutOff <- quantile(fit$Amean,probs=.33)
+    #   
+    #   hist_res <- graphics::hist(as.matrix(fit$coefficients), 100, col = "cornsilk", freq = FALSE, 
+    #                              main = "Probe Filtering Intensity Cutoff",
+    #                              border = "antiquewhite4",
+    #                              xlab = "Median intensities")
+    #   
+    #   abline(v = CutOff, col = "coral4", lwd = 2)
+    #   
+    #   keep <- fit$Amean > CutOff
+    #   fit <- fit[keep,] # filter out probes below cutoff expression level
+    #   annotation.subset <- annotation.subset[keep,]
+    #   MA.summarized <- MA.summarized[keep,]
+    # }
     
     # Create Contrast Model
     combos<-combn(levels(fff),2) # generate matrix of pairwise group combinations for comparison
@@ -249,7 +271,7 @@ reduced_output_table$All.stdev <- contrast.fit$s2.post
 output_table$F.p.value <- contrast.fit$F.p.value
 reduced_output_table$F.p.value <- contrast.fit$F.p.value
 
-if (opt$model == "Separate Channels"){
+if (targets$design == "Separate Channels"){
   
   ########## Add Group Mean Values
   group_means<-as.data.frame(fit$coefficients)
@@ -267,7 +289,7 @@ if (opt$model == "Separate Channels"){
   
 }
 
-if (opt$model == "Replicate Array"){
+if (targets$design == "Replicate Array"){
   uu<-uu[1]
   ########## Add Group Mean Values
   group_means<-as.data.frame(fit$coefficients)
@@ -286,7 +308,7 @@ if (opt$model == "Replicate Array"){
 }
 
 
-if (opt$model == "Replicate Array"){
+if (targets$design == "Replicate Array"){
   # Contrast 1
   top <- topTable(fit, coef = 1, number = Inf, genelist = fit$genes$ID, adjust.method = "BH", sort.by = "none")
   table <- top[,c(2,5,6)] # Pull columns for Log2fc, P.value, Adj.p.value
@@ -319,7 +341,7 @@ if (opt$model == "Replicate Array"){
   reduced_output_table<-cbind(reduced_output_table,table.reduced)
 }
 
-if (opt$model == "Separate Channels" || opt$model == "Common Reference"){
+if (targets$design == "Separate Channels" || targets$design == "Common Reference"){
   
   # iterate through contrasts
   for (i in 1:length(contrasts)){
@@ -348,7 +370,7 @@ write.csv(reduced_output_table,"differential_expression.csv", row.names = FALSE)
 write.csv(output_table,"visualization_output_table.csv", row.names = FALSE)
 
 
-if (opt$model == "Replicate Array"){
+if (targets$design == "Replicate Array"){
   contrast.names<-c(paste(uu[1],uu[2],sep = "v"),paste(uu[2],uu[1],sep = "v"))
   write.csv(contrast.names,"contrasts.csv")
 } else {
@@ -362,7 +384,7 @@ if (opt$model == "Replicate Array"){
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"Metadata"), showWarnings = FALSE)
 path<-file.path(workdir,"Processed_Data",opt$glds,"Metadata")
 setwd(path)
-file.copy(from = opt$isafile$datapath, to = file.path(path,opt$isafile$name),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-try(file.copy(from = opt$probefile$datapath, to = file.path(path,opt$probefile$name),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE))
+file.copy(from = opt$isa, to = file.path(path,basename(opt$isa)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+try(file.copy(from = opt$probe, to = file.path(path,basename(opt$probe)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE))
 
-cat("All data files have been written to:  ",file.path(workdir,"Processed_Data"))
+cat("All data files have been written to:  ",file.path(workdir,"Processed_Data",opt$glds))
