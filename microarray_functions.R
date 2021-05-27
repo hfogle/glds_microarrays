@@ -151,6 +151,34 @@ buildTargets <- function(opt) {
   return(all_targets)
 }
 
+### Use API staging script
+
+staging <- function(opt,tempin){
+  library(reticulate)
+  library(tidyverse)
+  
+  # Seeing your enviroments
+  conda_list()
+  
+  #Using it
+  conda_list()[[1]][1] %>% 
+    use_condaenv(required = TRUE)
+  
+  #Checking python
+  
+  # import platform
+  # print(platform.python_version())
+  string <- "source activate glds_microarrays"
+  system(string)
+  string <- paste0("retrieve_isa_from_genelab.py --accession ",opt$glds, " --to-Microarray-runsheet --allow-missing-columns")
+  cat("\nStaging Script Call: ",string,"\n")
+  setwd(tempin)
+  py_run_string(string)
+  list.files(tempin)
+  
+  return(tempin)
+}
+
 ### Parse ISAtab
 
 ### Match Data Files
