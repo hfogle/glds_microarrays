@@ -1,0 +1,14 @@
+name: glds_microarrays
+channels:
+   - bioconda
+   - conda-forge
+   - defaults
+dependencies:
+   - python=3.8
+   - r-base=4.0
+   - isatools
+   - peppy
+   - pip
+   - pip:
+     - git+https://github.com/J-81/Analysis_Staging.git@0.3.4-dev
+     - "--editable=git+https://github.com/hfogle/glds_microarrays"
