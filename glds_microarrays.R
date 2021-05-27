@@ -10,6 +10,8 @@ option_list = list(
               help="Generate QA HTML Reports"),
   make_option(c("-i", "--isa"), type="character", default=NULL, 
               help="Study ISAtab.zip file path", metavar="character"),
+  make_option(c("-t", "--staging"), type="character", default=NULL, 
+              help="Use API staging"),
   make_option(c("-p", "--probe"), type="character", default=NULL, 
               help="Probe annotation file path", metavar="character"),
   make_option(c("-s", "--species"), type="character", default=NULL, 
@@ -30,9 +32,29 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
+# #####Testing
+# opt<-list()
+# opt$files <- "demo_datasets/GLDS-22/00-RawData/*.txt"
+# opt$isa <- "demo_datasets/GLDS-22/Metadata/*ISA.zip"
+# opt$glds <- "GLDS-22"
+# opt$species <- "Arabidopsis thaliana"
+# opt$platform <- "Agilent 1-channel"
+# opt$out <- "~/Documents/glds_projects/glds_microarrays"
+# setwd("~/Documents/glds_projects/glds_microarrays")
+# #####
+
 if (is.null(opt$glds)){
   print_help(opt_parser)
   stop("At least one argument must be supplied (GLDS)", call.=FALSE)
+}
+
+source("microarray_functions.R")
+
+if (opt$staging == TRUE){
+  tempin <- tempdir()
+  unlink(list.files(tempin, full.names = TRUE))
+  staging(opt,tempin)
+  
 }
 ### Get organism annotation package
 options(connectionObserver = NULL)
@@ -89,7 +111,7 @@ cat("\nPlots generate by package:",plots,"\n")
 
 ### Parse ISA
 
-source("microarray_functions.R")
+
 all_targets<-buildTargets(opt)
 if (length(all_targets) == 1){
   targets <- all_targets[[1]]
