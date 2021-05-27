@@ -9,6 +9,16 @@ Rscript --vanilla glds_microarrays.R --help
 ############################
 Test Staging Call 
 
+1. install conda environment from yml file
+
+conda env create -f glds_microarrays_conda.yml
+
+2. activate environment
+
+conda activate glds_microarrays
+
+3. run batch script
+
 sh glds_microarrays.sh GLDS-121
 
 ############################
