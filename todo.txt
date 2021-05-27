@@ -1,3 +1,25 @@
+#### SCRATCH ####
+Rscript --vanilla glds_microarrays.R --files "/Users/hfogle/Documents/glds_projects/arrays/GLDS-1/00-RawData/*.CEL" --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-121 --isa /Users/hfogle/Documents/glds_projects/arrays/GLDS-1/Metadata/*ISA.zip 
+
+Rscript --vanilla glds_microarrays.R --files "/Users/hfogle/Documents/glds_projects/arrays/GLDS-4/00-RawData/*.CEL" --species "Mus musculus" --platform Affymetrix --glds GLDS-4 --isa /Users/hfogle/Documents/glds_projects/arrays/GLDS-4/Metadata/*ISA.zip
+
+Rscript --vanilla glds_microarrays.R --files "/Users/hfogle/Documents/glds_projects/arrays/GLDS-7/00-RawData/*.CEL" --species "Arabidopsis thaliana" --platform Affymetrix --glds GLDS-7 --isa /Users/hfogle/Documents/glds_projects/arrays/GLDS-7/Metadata/*ISA.zip
+
+suppressMessages(library(limma))
+
+package <- raw@annotation
+package <- gsub("pd.","",package)
+package <- gsub("[.]","",package)
+package <- paste0(package,".db")
+
+
+Here is an example of the python CLI script you should have access to once installing the staging program (AST).
+
+> retrieve_isa_from_genelab.py --accession GLDS-121 --to-Microarray-runsheet --allow-missing-columns
+
+Note: For the GLDS-121 runsheet, I've included both the runsheet you currently get from the staging program as well as a manually adjusted 'draft' runsheet that will reflect how I intend to handle the raw data files all-in-a-one-zip-file situation.  I would recommend using the 'draft' version in planning how to extract data for your processing script.
+
+
 #### TO DO ####
 
 * zip large files on exit
