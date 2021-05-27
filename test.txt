@@ -7,6 +7,11 @@
 Rscript --vanilla glds_microarrays.R --help
 
 ############################
+Test Staging Call 
+
+sh glds_microarrays.sh GLDS-121
+
+############################
 # Test Affymetrix processing with demo_dataset
 # Requires Sub Directory Structure 00-RawData with only the raw data files, and Metadata with an ISA.zip and maybe an annotation file.
 
