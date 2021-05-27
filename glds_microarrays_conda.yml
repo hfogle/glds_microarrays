@@ -11,4 +11,4 @@ dependencies:
    - pip
    - pip:
      - git+https://github.com/J-81/Analysis_Staging.git@0.3.4-dev
-     - "--editable=git+https://github.com/hfogle/glds_microarrays"
+     - "--editable=git+https://github.com/hfogle/glds_microarrays#egg=glds_microarrays-master"
