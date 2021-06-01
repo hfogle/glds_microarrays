@@ -9,6 +9,10 @@ Rscript --vanilla glds_microarrays.R --help
 ############################
 Test Staging Call 
 
+0. if using the Rstudio terminal, you may need to initialize the shell 
+
+<full path>/conda init
+
 1. install conda environment from yml file
 
 conda env create -f glds_microarrays_conda.yml
