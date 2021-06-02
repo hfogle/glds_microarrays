@@ -16,6 +16,6 @@ retrieve_isa_from_genelab.py --accession $1 --to-Microarray-runsheet --allow-mis
 
 echo $1
 cd $workdir
-Rscript --vanilla $workdir/glds_microarrays.R --staging $outdir/*.csv --glds $1 --isa $outdir/*ISA.zip
+Rscript --vanilla $workdir/glds_microarrays.R --staging $outdir/*.csv --glds $1 --isa $outdir/*ISA.zip --reports > $1.log 2>&1
 
 rm -rf $tmpdir
