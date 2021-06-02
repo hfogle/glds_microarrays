@@ -154,6 +154,8 @@ buildTargets <- function(opt) {
 ### Use API staging script
 
 staging <- function(opt,tempin){
+  
+  table <- read.csv(opt$staging,header = TRUE, stringsAsFactors = FALSE)
   #library(reticulate)
   #library(tidyverse)
   
