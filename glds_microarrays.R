@@ -11,7 +11,7 @@ option_list = list(
   make_option(c("-i", "--isa"), type="character", default=NULL, 
               help="Study ISAtab.zip file path", metavar="character"),
   make_option(c("-t", "--staging"), type="character", default=NULL, 
-              help="Use API staging"),
+              help="Use API staging CSV file"),
   make_option(c("-p", "--probe"), type="character", default=NULL, 
               help="Probe annotation file path", metavar="character"),
   make_option(c("-s", "--species"), type="character", default=NULL, 
@@ -50,10 +50,22 @@ if (is.null(opt$glds)){
 
 source("microarray_functions.R")
 
-if (opt$staging == TRUE){
+if (length(opt$staging >= 1)){
   tempin <- tempdir()
   unlink(list.files(tempin, full.names = TRUE))
-  staging(opt,tempin)
+  cat("Staging table path: ",opt$staging,"\n")
+  table <- read.csv(opt$staging,header = TRUE, stringsAsFactors = FALSE)
+  cat("Staging headers: ",colnames(table),"\n")
+  opt$species <- table$Characteristics.Organism.[1]
+  cat("\nParsed organism: ",opt$species,"\n")
+  opt$platform <- table$Study.Assay.Technology.Platform[1]
+  labels <- table$Label
+  if(length(unique(labels))==1 && opt$platform == 'Agilent'){
+    opt$platform <- "Agilent 1-channel"
+  }else if(length(unique(labels))==2 && opt$platform == 'Agilent'){
+    opt$platform <- "Agilent 2-channel"
+  }
+  cat("\nParsed platform: ",opt$platform,"\n")
   
 }
 ### Get organism annotation package
