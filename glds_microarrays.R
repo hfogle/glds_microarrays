@@ -51,8 +51,8 @@ if (is.null(opt$glds)){
 source("microarray_functions.R")
 
 if (length(opt$staging >= 1)){
-  tempin <- tempdir()
-  unlink(list.files(tempin, full.names = TRUE))
+  tempstage <- tempdir()
+  unlink(list.files(tempstage, full.names = TRUE))
   cat("Staging table path: ",opt$staging,"\n")
   table <- read.csv(opt$staging,header = TRUE, stringsAsFactors = FALSE)
   cat("Staging headers: ",colnames(table),"\n")
@@ -66,6 +66,15 @@ if (length(opt$staging >= 1)){
     opt$platform <- "Agilent 2-channel"
   }
   cat("\nParsed platform: ",opt$platform,"\n")
+  
+  staging <- table$array_data_file_path[1]
+  utils::download.file(staging, destfile = file.path(tempstage,"stagefiles.zip"))
+  opt$files <- file.path(tempstage,"stagefiles.zip")
+  cat("\nDownloaded files: ",opt$files,"\n")
+  unzip(opt$files, exdir = tempstage, junkpaths = FALSE)
+  file.remove(file.path(tempstage,"stagefiles.zip"))
+  opt$files <- list.files(tempstage)
+  cat(opt$files)
   
 }
 ### Get organism annotation package
