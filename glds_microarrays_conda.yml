@@ -6,6 +6,25 @@ channels:
 dependencies:
    - python=3.8
    - r-base=4.0
+   - r-shiny
+   - r-markdown
+   - r-knitr
+   - r-dt
+   - r-r.utils
+   - r-dplyr
+   - r-tidyr
+   - r-statmod
+   - bioconductor-risa
+   - bioconductor-limma
+   - bioconductor-geoquery
+   - bioconductor-arrayexpress
+   - bioconductor-stringdb
+   - bioconductor-annotationdbi
+   - bioconductor-oligo
+   - bioconductor-affy
+   - bioconductor-illuminaio
+   - bioconductor-help
+   - bioconductor-beadarray
    - isatools
    - peppy
    - pip
