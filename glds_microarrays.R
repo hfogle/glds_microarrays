@@ -50,6 +50,12 @@ if (is.null(opt$glds)){
 
 source("microarray_functions.R")
 
+### Get Study Files
+if (length(opt$files) > 0){
+  cat("\nImporting files for:",opt$glds, "\n")
+  opt$files <- Sys.glob(file.path(opt$files))
+}
+
 if (length(opt$staging >= 1)){
   tempstage <- tempdir()
   unlink(list.files(tempstage, full.names = TRUE))
@@ -66,15 +72,14 @@ if (length(opt$staging >= 1)){
     opt$platform <- "Agilent 2-channel"
   }
   cat("\nParsed platform: ",opt$platform,"\n")
+  cat("\nStaging file list: ",table$array_data_file_path,"\n")
   
-  staging <- table$array_data_file_path[1]
-  utils::download.file(staging, destfile = file.path(tempstage,"stagefiles.zip"))
-  opt$files <- file.path(tempstage,"stagefiles.zip")
-  cat("\nDownloaded files: ",opt$files,"\n")
-  unzip(opt$files, exdir = tempstage, junkpaths = FALSE)
-  file.remove(file.path(tempstage,"stagefiles.zip"))
+  for (file in 1:length(table)){
+    utils::download.file(table$array_data_file_path[file], destfile = file.path(tempstage,table$array_data_file[file]),quiet = FALSE)
+  }
+
   opt$files <- list.files(tempstage)
-  cat(opt$files)
+  cat("\nExtracted file list: ",opt$files,"\n")
   
 }
 ### Get organism annotation package
@@ -90,11 +95,7 @@ if(!require(ann.dbi, character.only=TRUE)) {
 cat("\nOrganism annotation set loaded: ",ann.dbi,"\n")
 
 
-### Get Study Files
-if (!is.null(opt$files)){
-  cat("\nImporting files for:",opt$glds, "\n")
-  opt$files <- Sys.glob(file.path(opt$files))
-}
+
 
 ### Get Files from Curated Directory
 if (!is.null(opt$dir)){
@@ -109,8 +110,10 @@ if (!is.null(opt$dir)){
 tempin <- tempdir()
 unlink(list.files(tempin, full.names = TRUE))
 dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
+cat("files: ",opt$files)
 file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 opt$files <- list.files(file.path(tempin,"00-RawData"),full.names = TRUE)
+cat("filess: ",opt$files)
 dir.create(file.path(tempin,"Metadata"),showWarnings = FALSE)
 file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
