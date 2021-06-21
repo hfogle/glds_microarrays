@@ -78,7 +78,7 @@ if (length(opt$staging >= 1)){
     utils::download.file(table$array_data_file_path[file], destfile = file.path(tempstage,table$array_data_file[file]),quiet = FALSE)
   }
 
-  opt$files <- list.files(tempstage)
+  opt$files <- list.files(tempstage,full.names = TRUE)
   cat("\nExtracted file list: ",opt$files,"\n")
   
 }
@@ -113,7 +113,7 @@ dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
 cat("files: ",opt$files)
 file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 opt$files <- list.files(file.path(tempin,"00-RawData"),full.names = TRUE)
-cat("filess: ",opt$files)
+cat("files: ",opt$files)
 dir.create(file.path(tempin,"Metadata"),showWarnings = FALSE)
 file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
