@@ -23,7 +23,7 @@ conda activate glds_microarrays
 
 3. run batch script
 
-sh glds_microarrays.sh GLDS-121
+sh glds_microarrays.sh GLDS-205
 
 ############################
 # Test Affymetrix processing with demo_dataset
