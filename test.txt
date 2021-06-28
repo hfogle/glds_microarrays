@@ -7,7 +7,29 @@
 Rscript --vanilla glds_microarrays.R --help
 
 ############################
-Test Staging Call 
+Test LBL local from run sheet
+
+0. clone git repository onto LBL
+
+mkdir /home/user/glds_microarrays
+cd /home/user/glds_microarrays
+git clone https://github.com/hfogle/glds_microarrays
+
+1. install conda environment from yml file
+
+conda env create -f glds_microarrays_conda.yml
+
+2. activate environment
+
+conda activate glds_microarrays
+
+3. run rscript from glds_microarrays directory on LBL
+
+Rscript --vanilla glds_microarrays.R --glds GLDS-205  --runsheet data2/Data_Processing/Microarray_Datasets/GLDS_datasets/GLDS-205/Metadata/GLDS-205_runsheet_based_on_lbl.csv > GLDS-205.log 2>&1
+
+
+############################
+Test Repository API Staging Call 
 
 0. if using the Rstudio terminal, you may need to initialize the shell 
 
