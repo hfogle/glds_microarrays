@@ -24,6 +24,7 @@ dependencies:
    - bioconductor-beadarray
    - bioconductor-biocgenerics
    - r-rsqlite
+   - r-rcpp
    - r-optparse
    - isatools
    - peppy
