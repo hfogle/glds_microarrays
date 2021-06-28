@@ -75,12 +75,8 @@ if (length(opt$runsheet >= 1)){
   }
   cat("\nParsed platform: ",opt$platform,"\n")
   cat("\nStaging file list: ",table$array_data_file_path,"\n")
-  
-  for (file in 1:length(table)){
-    utils::download.file(table$array_data_file_path[file], destfile = file.path(tempstage,table$array_data_file[file]),quiet = FALSE)
-  }
-  
-  opt$files <- list.files(tempstage,full.names = TRUE)
+
+  opt$files <- table$array_data_file_path
   cat("\nExtracted file list: ",opt$files,"\n")
 }
 
