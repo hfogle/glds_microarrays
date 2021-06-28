@@ -6,6 +6,8 @@ library("optparse")
 option_list = list(
   make_option(c("-f", "--files"), type="character", default=NULL, 
               help="Dataset file paths", metavar="character"),
+  make_option(c("-u", "--runsheet"), type="character", default=NULL, 
+              help="Runsheet file path", metavar="character"),
   make_option(c("-r", "--reports"), action="store_true", default=FALSE, 
               help="Generate QA HTML Reports"),
   make_option(c("-i", "--isa"), type="character", default=NULL, 
@@ -54,6 +56,32 @@ source("microarray_functions.R")
 if (length(opt$files) > 0){
   cat("\nImporting files for:",opt$glds, "\n")
   opt$files <- Sys.glob(file.path(opt$files))
+}
+
+if (length(opt$runsheet >= 1)){
+  tempstage <- tempdir()
+  unlink(list.files(tempstage, full.names = TRUE))
+  cat("Staging table path: ",opt$runsheet,"\n")
+  table <- read.csv(opt$runsheet,header = TRUE, stringsAsFactors = FALSE)
+  cat("Staging headers: ",colnames(table),"\n")
+  opt$species <- table$Characteristics.Organism.[1]
+  cat("\nParsed organism: ",opt$species,"\n")
+  opt$platform <- table$Study.Assay.Technology.Platform[1]
+  labels <- table$Label
+  if(length(unique(labels))==1 && opt$platform == 'Agilent'){
+    opt$platform <- "Agilent 1-channel"
+  }else if(length(unique(labels))==2 && opt$platform == 'Agilent'){
+    opt$platform <- "Agilent 2-channel"
+  }
+  cat("\nParsed platform: ",opt$platform,"\n")
+  cat("\nStaging file list: ",table$array_data_file_path,"\n")
+  
+  for (file in 1:length(table)){
+    utils::download.file(table$array_data_file_path[file], destfile = file.path(tempstage,table$array_data_file[file]),quiet = FALSE)
+  }
+  
+  opt$files <- list.files(tempstage,full.names = TRUE)
+  cat("\nExtracted file list: ",opt$files,"\n")
 }
 
 if (length(opt$staging >= 1)){
@@ -108,7 +136,7 @@ if (!is.null(opt$dir)){
 
 ### Copy files to temp directory
 tempin <- tempdir()
-unlink(list.files(tempin, full.names = TRUE))
+#unlink(list.files(tempin, full.names = TRUE))
 dir.create(file.path(tempin,"00-RawData"), showWarnings = FALSE)
 cat("files: ",opt$files)
 file.copy(from = opt$files, to = file.path(tempin,"00-RawData"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
@@ -136,12 +164,13 @@ cat("\nPlots generate by package:",plots,"\n")
 ### Parse ISA
 
 
-all_targets<-buildTargets(opt)
-if (length(all_targets) == 1){
-  targets <- all_targets[[1]]
-}else{
-  targets <- all_targets[[which_assay]]
-}
+# all_targets<-buildTargets(opt)
+# if (length(all_targets) == 1){
+#   targets <- all_targets[[1]]
+# }else{
+#   targets <- all_targets[[which_assay]]
+# }
+targets <- stagingTargets(opt)
 cat("\nTargets\n")
 str(targets)
 
