@@ -154,7 +154,7 @@ headers<-list(
 ### Use API staging script
 stagingTargets <- function(opt) {
 
-    
+    na_strings <- c('NA','na','null','NULL','Null','')
     target<-list()
     study_samples <- table$Sample.Name
     target$labels = length(unique(table$Label))
