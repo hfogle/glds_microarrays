@@ -12,7 +12,7 @@ dependencies:
    - r-dt
    - r-r.utils
    - r-dplyr
-   - r-tidyr
+   - r-tidyverse
    - r-statmod
    - bioconductor-limma
    - bioconductor-geoquery
