@@ -77,6 +77,23 @@ if (length(opt$runsheet >= 1)){
   cat("\nStaging file list: ",table$array_data_file_path,"\n")
 
   opt$files <- table$array_data_file_path
+  
+  for (file in 1:length(opt$files)){ # test whether file path exists from runsheet, if not, tries to find it using local directory structure
+    if (file.exists(opt$files[file])){
+      cat("The file exists: ",opt$files[file],"\n")
+    } else{
+      altfile <- paste0(dirname(dirname(opt$runsheet)),"/00-RawData/",basename(opt$files[file]))
+      if (file.exists(altfile)) {
+        
+        cat("The file exists: ",altfile,"\n")
+        opt$files[file] <- altfile
+      } else {
+        
+        cat("The files do not exist: ",altfile,"  ",opt$files[file],"\n")
+      }
+    }
+  }
+  
   cat("\nExtracted file list: ",opt$files,"\n")
 }
 
