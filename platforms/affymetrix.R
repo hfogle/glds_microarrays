@@ -3,13 +3,13 @@ cat("\nAffymetrix pipeline selected\n")
 
 ### Import Raw Data
 
-for (file in opt$files){
-  if (grepl("\\.gz$", file)) {
-    R.utils::gunzip(filename = file, remove = TRUE)
-    opt$files<-list.files(file.path(tempin,"00-RawData"))}
-}
-rm(file)
-
+# for (file in opt$files){
+#   if (grepl("\\.gz$", file)) {
+#     R.utils::gunzip(filename = file, remove = TRUE)
+#     opt$files<-list.files(file.path(tempin,"00-RawData"))}
+# }
+# rm(file)
+cat("Extracted runsheet files: ",opt$files)
 str(opt$files)
 
 workdir <- opt$out
@@ -104,10 +104,10 @@ annotation <- data.frame(REFSEQ=mapIds(eval(parse(text = database),env=.GlobalEn
 
 try(annotation$ENSEMBL<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "ENSEMBL",multiVals = "first"))
 try(annotation$SYMBOL<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "SYMBOL",multiVals = "first"))
-try(annotation$DESCRIPTION<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "GENENAME",multiVals = "first"))
+try(annotation$GENENAME<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "GENENAME",multiVals = "first"))
 try(annotation$ENTREZID<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "ENTREZID",multiVals = "first"))
 try(annotation$TAIR<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "TAIR",multiVals = "first"))
-try(annotation$GOSLIM_ID<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "GO",multiVals = "first"))
+try(annotation$GOSLIM_IDS<-mapIds(eval(parse(text = database),env=.GlobalEnv),keys = keys,keytype = keytype, column = "GO",multiVals = "first"))
 
 
 ### Map STRING annotations
@@ -127,7 +127,7 @@ cat("\nGenerating normalized-annotated.txt file\n")
 setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 expression <- cbind(annotation,expression)
 write.table(expression,"normalized-annotated.txt",quote=FALSE, append = FALSE, row.names = FALSE, sep = "\t")
-
+write.table(annotation,"probe_annotations.txt",quote=FALSE, append = FALSE, row.names = FALSE, sep = "\t")
 ### Rename assay samples with ISAtab sample names
 index<-sapply(targets$t1$SampleName,function(x){grep(x,sampleNames(data))})
 sampleNames(data)<-targets$t1$SampleName[order(index)]
