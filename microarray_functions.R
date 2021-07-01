@@ -169,7 +169,7 @@ stagingTargets <- function(opt) {
     group <- apply(factors,1,function(x) {paste(na.omit(x),collapse=" & ")}) # groups are concatenations of non empty factor values per sample
     table$Hybridization.Assay.Name <- sub("\\ \\d+", "", table$Hybridization.Assay.Name)
     table$Source.Name <- sub("\\ \\d+", "", table$Source.Name)
-    library(tidyr)
+    
     if ((target$labels == 1) && (target$seperate_channel_files == FALSE)){
       cat("One color microarray design...","\n")
       target$t1 <- data.frame(SampleName=table$Sample.Name, Group=group, ArrayName=table$Hybridization.Assay.Name, FileName=files)
@@ -180,14 +180,14 @@ stagingTargets <- function(opt) {
       cat("Two color microarray design...","\n")
       target$t1 <- data.frame(Label=table$Label, Group=group, ArrayName=table$Hybridization.Assay.Name, FileName=files)
       
-      target$t1 <- pivot_wider(target$t1, names_from = Label, values_from = Group)
+      target$t1 <- tidyr::pivot_wider(target$t1, names_from = Label, values_from = Group)
     }else if ((target$labels == 1) && (target$seperate_channel_files == TRUE)){
       cat("One color microarray design with seperate channel files...","\n")
       target$t1 <- data.frame(SampleName=table$Sample.Name, Group=group, ArrayName=table$Hybridization.Assay.Name, FileName=files)      
-      target$t1$SourceName <- isa@study.files[[1]]$`Source Name`[study_samples]
+      target$t1$SourceName <- table$Source.Name
       target$t1 <- target$t1[order(target$t1$SampleName,target$t1$FileName),]
       target$t1$Label <- rep(c("FileName_1","FileName_2"),dim(table)[1]/2)
-      target$t1 <- pivot_wider(target$t1, names_from = Label, values_from = FileName)
+      target$t1 <- tidyr::pivot_wider(target$t1, names_from = Label, values_from = FileName)
       target$t1 <- cbind(target$t1,factors)
       target$paired_samples <- (length(unique(target$t1$SourceName)) < length(unique(target$t1$SampleName)))
     }else if ((target$labels == 2) && (target$seperate_channel_files == TRUE)){
@@ -195,8 +195,8 @@ stagingTargets <- function(opt) {
       target$t1 <- data.frame(Label=table$Label, Group=group, ArrayName=table$Hybridization.Assay.Name, FileName=files)
       target$t1 <- target$t1[order(target$t1$FileName,target$t1$Label),]
       target$t1$FileLabel <- paste0("FileName",target$t1$Label)
-      t1a <- pivot_wider(target$t1[,c("Label","Group","ArrayName")], names_from = Label, values_from = Group)
-      t1b <- pivot_wider(target$t1[,c("FileLabel","FileName","ArrayName")], names_from = FileLabel, values_from = FileName)
+      t1a <- tidyr::pivot_wider(target$t1[,c("Label","Group","ArrayName")], names_from = Label, values_from = Group)
+      t1b <- tidyr::pivot_wider(target$t1[,c("FileLabel","FileName","ArrayName")], names_from = FileLabel, values_from = FileName)
       target$t1 <- dplyr::left_join(t1a,t1b,by = "ArrayName")
     }else {
       cat("Error detecting labeling pattern", "\n")
@@ -210,7 +210,7 @@ stagingTargets <- function(opt) {
       Ref <- apply(Ref,2,all)
       Ref_group <- unique(group)[Ref] # groups common to all arrays
       sample_pairs <- table[,which(colnames(table) %in% c("Label","Sample.Name", "Hybridization.Assay.Name"))]
-      sample_pairs <- pivot_wider(sample_pairs, names_from = Label, values_from = `Sample.Name`, id_cols = `Hybridization.Assay.Name`)
+      sample_pairs <- tidyr::pivot_wider(sample_pairs, names_from = Label, values_from = `Sample.Name`, id_cols = `Hybridization.Assay.Name`)
       sample_pairs <- sample_pairs[,-c(1)]
       common_samples <- as.data.frame(t(apply(sample_pairs,1,function(x){unique(table$Sample.Name) %in% x})))
       common_samples <- unique(table$Sample.Name)[which(apply(common_samples,2,all))]
