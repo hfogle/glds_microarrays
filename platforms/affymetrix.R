@@ -302,3 +302,6 @@ file.copy(from = opt$isa, to = file.path(path,"ISA.zip"), overwrite = FALSE, rec
 
 file.copy(from = opt$probe, to = file.path(path,basename(opt$probe)), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 rm(path)
+
+file.copy(from = opt$runsheet, to = file.path(path,"run_sheet.csv"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+rm(path)
