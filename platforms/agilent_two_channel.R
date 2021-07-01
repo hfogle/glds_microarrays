@@ -78,11 +78,11 @@ for(annkey in columns(eval(parse(text = ann.dbi)))){
 try(annotation$REFSEQ<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "REFSEQ",multiVals = "first")))
 try(annotation$ENSEMBL<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "ENSEMBL",multiVals = "first")))
 try(annotation$SYMBOL<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "SYMBOL",multiVals = "first"))) #GENENAME
-try(annotation$DESCRIPTION<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "GENENAME",multiVals = "first"))) #DESCRIPTION
+try(annotation$GENENAME<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "GENENAME",multiVals = "first"))) #DESCRIPTION
 try(annotation$TAIR<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "TAIR",multiVals = "first")))
 try(annotation$ORF<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "ORF",multiVals = "first")))
 try(annotation$ENTREZID<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "ENTREZID",multiVals = "first")))
-try(annotation$GOSLIM_ID<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "GO",multiVals = "first")))
+try(annotation$GOSLIM_IDS<-as.character(mapIds(eval(parse(text = ann.dbi),env=.GlobalEnv),keys = as.character(annotation$ID),keytype = keytype, column = "GO",multiVals = "first")))
 
 annotation <- data.frame(annotation,stringsAsFactors = FALSE)
 is.na(annotation) <- annotation == "NULL"
@@ -161,7 +161,7 @@ write.table(expression,"normalized.txt",quote=FALSE, append=FALSE, sep = "\t", c
 
 expression <- cbind(annotation.subset,expression)
 write.table(expression,"normalized-annotated.txt",quote=FALSE, append=FALSE, sep = "\t", row.names = FALSE)
-
+write.table(annotation,"probe_annotations.txt",quote=FALSE, append = FALSE, row.names = FALSE, sep = "\t")
 ### Write out annotated MA file
 save(MA.summarized,file = "normalized-annotated.rda")
 
