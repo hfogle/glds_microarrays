@@ -54,7 +54,7 @@ sh glds_microarrays.sh GLDS-205
 
 ### Input
 
-Option        | Type | Description
+Basic Options | Type | Description
 ------------- | ---- | -----------
 --glds | character | Accession ID of the GLDS study to be processed
 --reports | flag | If this flag is given, the script will generate raw and normalized quality assessment reports as HTML files
