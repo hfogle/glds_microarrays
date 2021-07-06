@@ -76,17 +76,17 @@ Additional Options | Type | Description
 
 The script generates an output directory with the following structure:
 
-GLDS-XXX/
-  00-RawData/
-  01-NormalizedData/
-  02-Limma_DGE/
-  Metadata/
+00-RawData
+01-NormalizedData
+02-Limma_DGE
+Metadata
 
 00-RawData Files | Description
 ---------------- | -----------
 raw files | Multiple raw data files with platform specific extensions (e.g. CEL, raw.txt, GPR, XYS, etc.)
 raw_qa.html | Raw data quality assessment report generated with --reports flag
 visualization_PCA_table.csv | PCA plotting table for data visualization of raw data
+md5sum.txt | Checksum table for all raw data files
 
 01-NormalizedData Files | Description
 ----------------------- | -----------
@@ -112,6 +112,9 @@ ISA.zip | ISAtab formatted metadata copied if using glds_microarrays.sh API scri
 ## Platform Processing Functions
 
 ### affymetrix.R
+
+This function takes the glds_microarray.R options object as input and generates output files customized to the Affymetrix platform. 
+Preprocessing is performed with the Oligo package. RMA background correction and Quantiles normalization are performed to generate normalized expression values. For ST class arrays, core gene level estimation is performed. DGE analysis is performed with the Limma package. Control probes and unannotated probes are filtered. Multiple probes mapping to a gene identifier are aggregated by maximum interquartile range. Normalized expression values are fit to a linear model
 
 ### agilent_one_channel.R
 
