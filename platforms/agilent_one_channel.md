@@ -47,10 +47,8 @@ Homer Fogle (GeneLab Analysis Team)
 |tidyverse|1.3.1|[https://cran.r-project.org/web/packages/tidyverse/index.html](https://cran.r-project.org/web/packages/tidyverse/index.html)|
 |rmarkdown|2.9|[https://cran.r-project.org/web/packages/rmarkdown/index.html](https://cran.r-project.org/web/packages/rmarkdown/index.html)|
 |shiny|1.6|[https://cran.r-project.org/web/packages/shiny/index.html](https://cran.r-project.org/web/packages/shiny/index.html)|
-|oligo|3.13|[https://bioconductor.org/packages/release/bioc/html/oligo.html](https://bioconductor.org/packages/release/bioc/html/oligo.html)|
 |limma|3.48|[https://bioconductor.org/packages/release/bioc/html/limma.html](https://bioconductor.org/packages/release/bioc/html/limma.html)|
 |GEOquerry|2.60|[https://bioconductor.org/packages/release/bioc/html/GEOquery.html](https://bioconductor.org/packages/release/bioc/html/GEOquery.html)|
-|beadarray|2.42|[https://bioconductor.org/packages/release/bioc/html/beadarray.html](https://bioconductor.org/packages/release/bioc/html/beadarray.html)|
 |qa_summary_raw.rmd|1.0|[https://bioconductor.org/packages/release/bioc/html/GEOquery.html](https://bioconductor.org/packages/release/bioc/html/GEOquery.html)|
 |qa_summary_normalized.rmd|1.0|[https://bioconductor.org/packages/release/bioc/html/beadarray.html](https://bioconductor.org/packages/release/bioc/html/beadarray.html)|
 |genefilter|1.74|[https://bioconductor.org/packages/release/bioc/html/genefilter.html](https://bioconductor.org/packages/release/bioc/html/genefilter.html)|
@@ -93,15 +91,16 @@ rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",out
 #### 2. Background Correction and Normalization
 
 ```
-data <- oligo::rma(raw, target = "core", background=TRUE, normalize=TRUE)
+data <- limma::backgroundCorrect(raw, method="normexp", offset=50)
+data <- limma::normalizeBetweenArrays(data, method="quantile")
 ```
 
 **Parameter Definitions:**
 
-*	`object` – R oligoclass object containing raw data
-*	`target` – Level of summarization (only for Exon/Gene arrays)
-*	`background` – Logical - perform RMA background correction?
-*	`normalize` – Logical - perform quantile normalization?
+*	`RG` – a numeric matrix, EListRaw or RGList object.
+*	`method` – character string specifying correction method. 
+*	`offset` – 	numeric value to add to intensities
+
 
 **Input data:**
 
