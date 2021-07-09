@@ -32,9 +32,12 @@ conda activate glds_microarrays
 Rscript --vanilla glds_microarrays.R --glds GLDS-205 --reports --runsheet <runsheet path> > <logfile.log> 2>&1
 
 Example:
+Affymetrix
 Rscript --vanilla glds_microarrays.R --glds GLDS-205 --reports --runsheet ./demo_datasets/GLDS-205/Metadata/GLDS-205_runsheet_based_on_lbl.csv > GLDS-205.log 2>&1
-
-
+Agilent 1channel
+Rscript --vanilla glds_microarrays.R --glds GLDS-22 --reports --runsheet ./demo_datasets/GLDS-22/Metadata/MANUAL_v1_GLDS-22_runsheet_based_on_lbl.csv > GLDS-22.log 2>&1
+Agilent 2channel
+Rscript --vanilla glds_microarrays.R --glds GLDS-123 --reports --runsheet ./demo_datasets/GLDS-123/Metadata/MANUAL_v1_GLDS-123_runsheet_based_on_lbl.csv --probe ./demo_datasets/GLDS-123/Metadata/GPL10816.soft > GLDS-123.log 2>&1
 ############################
 Test Repository API Staging Call 
 
