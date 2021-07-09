@@ -116,6 +116,6 @@ for (ind in 1:count){
   y[i] <- log2(raw$Eb[,ind])
   raw$printer <- list(ngrid.r=1,ngrid.c=1,nspot.r=nr,nspot.c=nc) 
 }
-  imageplot(y,raw$printer, main=colnames(raw$Eb)[ind])
+  try(imageplot(y,raw$printer, main=colnames(raw$Eb)[ind]))
   }
 ```
