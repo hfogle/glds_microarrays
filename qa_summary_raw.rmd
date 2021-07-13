@@ -56,7 +56,7 @@ if (class(raw)=="ExonFeatureSet" || class(raw)=="GeneFeatureSet"){
 ```{r eval=(plots == "LIMMA"), echo=FALSE}
 
 plotDensities(raw, legend = FALSE)
-legend("topright",legend=targets$t1$SampleName,fill = rainbow(count))
+try(legend("topright",legend=targets$t1$SampleName,fill = rainbow(count)))
 
 ```
 

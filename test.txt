@@ -37,7 +37,9 @@ Rscript --vanilla glds_microarrays.R --glds GLDS-205 --reports --runsheet ./demo
 Agilent 1channel
 Rscript --vanilla glds_microarrays.R --glds GLDS-22 --reports --runsheet ./demo_datasets/GLDS-22/Metadata/MANUAL_v1_GLDS-22_runsheet_based_on_lbl.csv > GLDS-22.log 2>&1
 Agilent 2channel
-Rscript --vanilla glds_microarrays.R --glds GLDS-123 --reports --runsheet ./demo_datasets/GLDS-123/Metadata/MANUAL_v1_GLDS-123_runsheet_based_on_lbl.csv --probe ./demo_datasets/GLDS-123/Metadata/GPL10816.soft > GLDS-123.log 2>&1
+Rscript --vanilla glds_microarrays.R --glds GLDS-123 --runsheet ./demo_datasets/GLDS-123/Metadata/MANUAL_v1_GLDS-123_runsheet_based_on_lbl.csv --probe ./demo_datasets/GLDS-123/Metadata/GPL10816.soft > GLDS-123.log 2>&1
+
+Rscript --vanilla glds_microarrays.R --glds GLDS-60 --reports --runsheet ./demo_datasets/GLDS-60/Metadata/GLDS-60_a_E-MTAB-3290_GeneChip_assay_proto_run_sheet.csv --probe ./demo_datasets/GLDS-60/Metadata/GPL10816_family.soft > GLDS-60.log 2>&1
 ############################
 Test Repository API Staging Call 
 

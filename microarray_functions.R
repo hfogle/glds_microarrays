@@ -161,9 +161,16 @@ stagingTargets <- function(opt) {
     labelnames <- unique(table$Label)
     files <- table$array_data_file
     target$seperate_channel_files <- eval((length(unique(files)) == 2*length(unique(table$Hybridization.Assay.Name))))
-
-    factors <- table[,grep("Factor.Value",colnames(table))]
-
+    #cat("COLNAMES ",colnames(table),"\n")
+    #factorcols <- sapply(colnames(table),function(x) {grepl("Factor.Value",x,fixed = TRUE)})
+    #factorcols <- grepl("Factor.Value",colnames(table),fixed = TRUE)
+    #factors <- table[,factorcols==TRUE]
+    #factors <- table[,grep("Factor.Value.Hypergravity.",colnames(table),fixed = TRUE, ignore.case = TRUE)]
+    #factors <- table[,grepl("Factor.Value",colnames(table),fixed = TRUE, ignore.case = TRUE)]
+    factorcols <- sapply(colnames(table),function(x) {stringr::str_detect(x,"Factor")})
+   
+    factors <- as.data.frame(table[,factorcols==TRUE])
+    cat("Parsed factor headers: ",colnames(factors),"\n")
     colnames(factors)<-paste("factor",1:dim(factors)[2], sep = "_")
     is.na(factors) <- Reduce("|", lapply(na_strings, "==", factors)) # avoids whitespace issues for group strings
     group <- apply(factors,1,function(x) {paste(na.omit(x),collapse=" & ")}) # groups are concatenations of non empty factor values per sample

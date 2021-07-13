@@ -160,7 +160,7 @@ file.copy(from = opt$isa, to = file.path(tempin,"Metadata"), overwrite = FALSE, 
 opt$isa <- list.files(file.path(tempin,"Metadata"),pattern = "*ISA.zip", full.names = TRUE)
 file.copy(from = opt$probe, to = file.path(tempin,"Metadata"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 opt$probe <- list.files(file.path(tempin,"Metadata"),pattern = "*annotation*|GPL*", full.names = TRUE)
-
+cat("Temp Probe file: ",opt$probe, "\n")
 ### Determine Platform
 
 ### Selects appropriate package for plots
