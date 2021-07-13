@@ -148,7 +148,7 @@ setwd(file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
 
 ### Normalized QA Report
 if(opt$reports == TRUE){
-  rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData"))
+  try(rmarkdown::render("qa_summary_normalized.Rmd","html_document", output_file="normalized_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"01-NormalizedData")))
 }
 
 #annotation.subset <- dplyr::select(MA.summarized$genes, contains(c("ID")))
