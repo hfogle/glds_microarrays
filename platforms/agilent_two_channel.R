@@ -170,7 +170,7 @@ save(MA.summarized,file = "normalized-annotated.rda")
 library(statmod)
 
 if (targets$design == "Replicate Array"){
- 
+    cat("\nReplicate Array Design Detected\n")
     uu<-uniqueTargets(targets$t2)
     uuu<-uniqueTargets(targets$t3)
     fff <- factor(targets$t3$Cy3, levels=uuu)
@@ -180,6 +180,7 @@ if (targets$design == "Replicate Array"){
     contrast.names<-c(paste(uu[1],uu[2],sep = "v"),paste(uu[2],uu[1],sep = "v"))
     results<-decideTests(fit, method = "separate", adjust.method = "BH", p.value = 0.05, lfc = 0.5)
     colnames(results)<-contrast.names[2]
+    cat("\nContrast Names: ",contrasts,"\n")
 }
 
 if (targets$design == "Common Reference"){
@@ -261,15 +262,29 @@ reduced_output_table <- annotation.subset
 output_table <- cbind(output_table,as.data.frame(MA.summarized$A))
 reduced_output_table <- cbind(reduced_output_table,as.data.frame(MA.summarized$A))
 
+if (targets$design == "Replicate Array"){
+  cat("\nReplicate array DGE block 1\n")
+  output_table$All.mean <- fit$Amean
+  reduced_output_table$All.mean <- fit$Amean
+  
+  output_table$All.stdev <- fit$s2.post
+  reduced_output_table$All.stdev <- fit$s2.post
+  
+  output_table$F.p.value <- fit$F.p.value
+  reduced_output_table$F.p.value <- fit$F.p.value
+  
+}else {
+  output_table$All.mean <- contrast.fit$Amean
+  reduced_output_table$All.mean <- contrast.fit$Amean
+  
+  output_table$All.stdev <- contrast.fit$s2.post
+  reduced_output_table$All.stdev <- contrast.fit$s2.post
+  
+  output_table$F.p.value <- contrast.fit$F.p.value
+  reduced_output_table$F.p.value <- contrast.fit$F.p.value
+  
+}
 
-output_table$All.mean <- contrast.fit$Amean
-reduced_output_table$All.mean <- contrast.fit$Amean
-
-output_table$All.stdev <- contrast.fit$s2.post
-reduced_output_table$All.stdev <- contrast.fit$s2.post
-
-output_table$F.p.value <- contrast.fit$F.p.value
-reduced_output_table$F.p.value <- contrast.fit$F.p.value
 
 if (targets$design == "Separate Channels"){
   
@@ -290,6 +305,7 @@ if (targets$design == "Separate Channels"){
 }
 
 if (targets$design == "Replicate Array"){
+  cat("\nReplicate array DGE block 2\n")
   uu<-uu[1]
   ########## Add Group Mean Values
   group_means<-as.data.frame(fit$coefficients)
@@ -310,6 +326,8 @@ if (targets$design == "Replicate Array"){
 
 if (targets$design == "Replicate Array"){
   # Contrast 1
+  cat("\nReplicate array DGE block 3\n")
+  
   top <- topTable(fit, coef = 1, number = Inf, genelist = fit$genes$ID, adjust.method = "BH", sort.by = "none")
   table <- top[,c(2,5,6)] # Pull columns for Log2fc, P.value, Adj.p.value
   colnames(table)<- c("Log2fc","P.value","Adj.p.value")
@@ -371,6 +389,8 @@ write.csv(output_table,"visualization_output_table.csv", row.names = FALSE)
 
 
 if (targets$design == "Replicate Array"){
+  cat("\nReplicate array DGE block 4\n")
+  
   contrast.names<-c(paste(uu[1],uu[2],sep = "v"),paste(uu[2],uu[1],sep = "v"))
   write.csv(contrast.names,"contrasts.csv")
 } else {
