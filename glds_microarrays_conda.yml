@@ -6,6 +6,7 @@ channels:
 dependencies:
    - python=3.8
    - r-base=4.0
+   - java-jdk
    - r-shiny
    - r-markdown
    - r-knitr
