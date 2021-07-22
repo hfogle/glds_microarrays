@@ -38,7 +38,7 @@ write.table(checksums, file.path(workdir,"Processed_Data",opt$glds,"00-RawData",
 
 ### Generate Raw Data QA HTML Report
 if(opt$reports == TRUE){
-  rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData"))
+  try(rmarkdown::render("qa_summary_raw.Rmd","html_document", output_file="raw_qa",output_dir=file.path(workdir,"Processed_Data",opt$glds,"00-RawData")))
 }
 
 ### Import Probe Annotation
