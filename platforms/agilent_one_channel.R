@@ -171,9 +171,11 @@ results<-decideTests(contrast.fit, method = "separate", adjust.method = "BH", p.
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"02-Limma_DGE"), showWarnings = FALSE)
 setwd(file.path(workdir,"Processed_Data",opt$glds,"02-Limma_DGE"))
 
-output_table <- fit$genes
-reduced_output_table <- fit$genes
-
+output_table <- data.filt$annotation
+reduced_output_table <- data.filt$annotation
+cat("\n 176: annotation: ",dim(annotation), colnames(annotation),"\n")
+cat("\n 177: fit$genes:",dim(fit$genes),colnames(fit$genes),"\n")
+cat("\n 178: data.filt$annotation:",dim(data.filt$annotation),colnames(data.filt$annotation),"\n")
 try(expr <- as.data.frame(data.filt$E))
 output_table <- cbind(output_table,expr)
 reduced_output_table <- cbind(reduced_output_table,expr)
@@ -242,6 +244,6 @@ path<-file.path(workdir,"Processed_Data",opt$glds,"Metadata")
 setwd(path)
 file.copy(from = opt$isa, to = file.path(path,basename(opt$isa)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 try(file.copy(from = opt$probe, to = file.path(path,basename(opt$probe)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE))
-file.copy(from = opt$runsheet, to = file.path(path,"run_sheet.csv"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+file.copy(from = opt$runsheet, to = file.path(path,basename(opt$runsheet)), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 rm(path)
 cat("All data files have been written to:  ",file.path(workdir,"Processed_Data",opt$glds))

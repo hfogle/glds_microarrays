@@ -295,13 +295,13 @@ write.csv(contrast.output,"contrasts.csv")
 
 rm (uu,group__,fit.index,fit.groups,fit.group.names,contrasts,contrast.names)
 
-### Move metadata files
+### Export Metadata files
 dir.create(file.path(workdir,"Processed_Data",opt$glds,"Metadata"), showWarnings = FALSE)
-path <- file.path(workdir,"Processed_Data",opt$glds,"Metadata")
-file.copy(from = opt$isa, to = file.path(path,"ISA.zip"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-
-file.copy(from = opt$probe, to = file.path(path,basename(opt$probe)), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+path<-file.path(workdir,"Processed_Data",opt$glds,"Metadata")
+setwd(path)
+file.copy(from = opt$isa, to = file.path(path,basename(opt$isa)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
+try(file.copy(from = Sys.glob(opt$probe), to = file.path(path,basename(opt$probe)),overwrite = FALSE, recursive = FALSE, copy.mode = FALSE))
+file.copy(from = opt$runsheet, to = file.path(path,basename(opt$runsheet)), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
 rm(path)
 
-file.copy(from = opt$runsheet, to = file.path(path,"run_sheet.csv"), overwrite = FALSE, recursive = FALSE, copy.mode = FALSE)
-rm(path)
+cat("All data files have been written to:  ",file.path(workdir,"Processed_Data",opt$glds))
