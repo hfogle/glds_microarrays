@@ -17,6 +17,7 @@ dependencies:
    - r-lobstr
    - r-vroom
    - r-tzdb
+   - r-dt
      # FOR GLDS-205 runs
    - bioconductor-org.at.tair.db
      # END FOR GLDS-205 runs
