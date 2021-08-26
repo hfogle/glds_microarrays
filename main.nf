@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 
 process RUN {
   conda = "${projectDir}/envs/minimal.yml"
-  publishDir = "{ params.outputDir }/{ params.gldsAccession }"
+  publishDir = "${ params.outputDir }/${ params.gldsAccession }"
 
   input:
     path(runsheet)
