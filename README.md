@@ -1,71 +1,142 @@
-# GeneLab Two-Channel Expression Microarray Data Processing Pipeline
+# glds_microarrays.R
 
-This is an R Markdown Interactive Document for processing GeneLab curated datasets that contain two-color gene expression assays. It can be run within the RStudio IDE with the Knit HTML button or on an R console with the command:  
-rmarkdown::render("glds_two_channel_arrays.Rmd")
+## Description
 
-An html report file and dynamic site will be generated from parameters defined in the manual_entry code block. Interactive parameter selection is available using the Knit with Parameters option. Processed data files will also be exported to the working directory.  
-
-Details about design model and normalization function parameters can be found in the Limma package documentation.[link](https://bioconductor.org/packages/release/bioc/vignettes/limma/inst/doc/usersguide.pdf)  
-
-***
-### Input Parameters
-
-* **GLDS Accession #** --- GeneLab repository accession number of the dataset or any string to create a seperate output folder (e.g. GLDS-8, GLDS8, Test1)
-* **Organism** --- Supported species annotations are listed in the YAML header
-* **Microarray Data Format** --- The Platform or Scanner file formatting of the raw data. This info can be found in the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) under 'PROTOCOLS', in the 'DESCRIPTION' of the 'image_aquisition' 'TYPE'
-  + Agilent GenePix --- Agilent microarray platform imaged with GenePix software
-  + Agilent --- Agilent microarray platform imaged with Agilent software
-  + GenePix --- GenePix software formatting and intensity estimation
-  + Spot --- SPOT software formatting with mean foreground estimation and morph background estimation
-  + Imagene --- Imagene software formatting and intensity estimation
-  + Bluefuse --- Bluefuse software formatting and intensity estimation
-  + Generic --- Generic spot array
-* **Two Channel Configuration** --- The sample to color channel configuration of the dataset. Dye-swapping arrangements are detected.
-  + Replicate Array --- Only two samples present across multiple arrays
-  + Common Reference --- A pool reference sample is present on each array
-  + Direct Two-Color --- Samples are compared directly by competitive hybridization on the same arrays
-  + Separate Channels ---  Converts a two-color experiment into a single channel experiment with twice as many arrays but with a technical pairing between the two channels
-* **Background Correction** --- Options supported by limma. This info can be found in the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) under 'PROTOCOLS', in the 'DESCRIPTION' of the 'feature_extraction' 'TYPE'
-  + normexp --- is recommended as the default background correction method.
-  + subtract ---
-  + morph ---
-* **Within Array Normalization** --- Options supported by limma. This info can be found in the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) under 'PROTOCOLS', in the 'DESCRIPTION' of the 'feature_extraction' 'TYPE'
-  + loess --- Loess within array normalization recommended for Agilent arrays
-  + printtiploess --- Print-tip recommended in general for others
-  + robustspline ---
-* **Between Array Normalization** --- Options supported by limma. This info can be found in the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) under 'PROTOCOLS', in the 'DESCRIPTION' of the 'feature_extraction' 'TYPE'
-  + Aquantile --- recommended as default. Applies quantile normalization to A-values between arrays
-  + quantile --- normalizes directly to the individual red and green intensities
-* **Primary Annotation Keytype** --- Gene identifier type for probe annotation from [Ann.dbi](https://www.bioconductor.org/packages/release/data/annotation/) sources
-* **Filters** --- Probe level filtering options to indicate which probes to remove prior to differential gene expression (DGE) analysis. By default, Non-Expressed, Control, and Non-Annotated Probes are all removed before DGE analysis to improve statistics and avoid modeling errors.
-* **Raw Data Files** --- Select the raw data files to be analyzed
-* **Probe Annotation File** --- Select the Annotation file provided by the dataset submitter. This file can be downloaded from the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) for each microarray dataset under 'STUDY FILES' -> 'Microarray Data Files' -> &ast;adf.txt (from [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/)) or GPL*.soft (from [GEO](https://www.ncbi.nlm.nih.gov/geo/)), or a platform specific file supplied by the dataset submitter.
-* **ISA Metadata File** --- GeneLab ISAtab study metadata file, which can be downloaded from the [GeneLab Data Repository](https://genelab-data.ndc.nasa.gov/genelab/projects) under 'STUDY FILES' -> 'Study Metadata Files' -> *ISA.zip
-
-***
-### Required R Packages available from the CRAN repository:  
-
-Package   | Documentation
-----------|--------------
-shiny     | [https://cran.r-project.org/web/packages/shiny/index.html](https://cran.r-project.org/web/packages/shiny/index.html)
-rmarkdown | [https://cran.r-project.org/web/packages/rmarkdown/index.html](https://cran.r-project.org/web/packages/rmarkdown/index.html)
-knitr     | [https://cran.r-project.org/web/packages/knitr/index.html](https://cran.r-project.org/web/packages/knitr/index.html)
-xfun      | [https://cran.r-project.org/web/packages/xfun/index.html](https://cran.r-project.org/web/packages/xfun/index.html)
-DT        | [https://cran.r-project.org/web/packages/DT/index.html](https://cran.r-project.org/web/packages/DT/index.html)
-R.utils   | [https://cran.r-project.org/web/packages/R.utils/index.html](https://cran.r-project.org/web/packages/R.utils/index.html)
-dplyr     | [https://cran.r-project.org/web/packages/dplyr/index.html](https://cran.r-project.org/web/packages/dplyr/index.html)
-tydyr     | [https://cran.r-project.org/web/packages/tidyr/index.html](https://cran.r-project.org/web/packages/tidyr/index.html)
-statmod   | [https://cran.r-project.org/web/packages/statmod/index.html](https://cran.r-project.org/web/packages/statmod/index.html)
+This executable R script is the main function for processing GeneLab microarray datasets. It may be run with local data if runsheet and raw data files are supplied or called by glds_microarrays.sh which will pull data from the GeneLab repository API. It currently supports all Affymetrix platforms and Agilent one and two channel platforms. Support for Illumina Beadchip, Nimblegen one and two channel platforms as well as generic two channel platforms is in development.
 
 
-### Required R Packages available from the Bioconductor repository:
+## Required Packages
 
-Package       | Documentation
---------------|--------------
-Risa          | [https://www.bioconductor.org/packages/release/bioc/html/Risa.html](https://www.bioconductor.org/packages/release/bioc/html/Risa.html)
-limma         | [https://bioconductor.org/packages/release/bioc/html/limma.html](https://bioconductor.org/packages/release/bioc/html/limma.html)
-GEOquery      | [https://bioconductor.org/packages/release/bioc/html/GEOquery.html](https://bioconductor.org/packages/release/bioc/html/GEOquery.html)
-ArrayExpress  | [https://www.bioconductor.org/packages/release/bioc/html/ArrayExpress.html](https://www.bioconductor.org/packages/release/bioc/html/ArrayExpress.html)
-STRINGdb      | [https://www.bioconductor.org/packages/release/bioc/html/STRINGdb.html](https://www.bioconductor.org/packages/release/bioc/html/STRINGdb.html)
-AnnotationDbi | [https://www.bioconductor.org/packages/release/bioc/html/AnnotationDbi.html](https://www.bioconductor.org/packages/release/bioc/html/AnnotationDbi.html)
+This software was written in R 4.0 and requires the following libraries to be installed:
 
+Package | Source | Description
+------- | ------ | -----------
+optparse | Cran | Parses command line input options as an R object
+rmarkdown | Cran | Convert R Markdown documents into a variety of formats
+shiny | Cran | Builds interactive HTML documents
+tidyverse | Cran | Collection of packages for tabular data manipulation and graphical output
+BiocManager | Cran | Install Bioconductor sourced packages within an R session
+oligo | Bioconductor | Pre-processing of Affymetrix and Nimblegen formatted raw array data
+limma | Bioconductor | Pre-processing of Agilent, GenePix, and two-channel raw array data as well as linear model fitting and differential expression analysis
+beadarray | Bioconductor | Pre-processing of Illumina Beadchip expression raw data
+GEOquery | Bioconductor | Parsing Gene Expression Omnibus formatted metadata files
+
+Cran packages can be installed from the R console like:
+
+install.packages("BiocManager")
+
+Bioconductor packages can be installed from the R console like:
+
+BiocManager::install("oligo")
+
+## Local Execution
+
+From the command line run:
+```bash
+RSscript --vanilla <options>
+```
+Example:
+```bash
+Rscript --vanilla glds_microarrays.R --glds GLDS-205 --reports --runsheet ../data/GLDS-205/Metadata/GLDS-205_runsheet_based_on_lbl.csv ```
+```
+
+## API Execution
+
+From the command line run:
+```bash
+sh glds_microarrays.sh <GLDS-XXX>
+```
+
+Example:
+```bash
+sh glds_microarrays.sh GLDS-205
+```
+
+### Input
+
+Basic Options | Type | Description
+------------- | ---- | -----------
+--glds | character | Accession ID of the GLDS study to be processed
+--reports | flag | If this flag is given, the script will generate raw and normalized quality assessment reports as HTML files
+--runsheet | path | Path to GeneLab generated run_sheet.csv metadata file for local processing
+--probe | path | Path to custom probe annotation file, primarily for two-channel datasets. If not supplied, the script will attempt to pull probe annotations from raw data files or from Bioconductor source databases
+--out | path | Optional path to desired output directory. If not supplied, output will be copied to Processed_Data in the execution directory
+
+Additional options are available for customized runs from local data utilizing ISAtab formatted metadata
+Additional Options | Type | Description
+------------------ | ---- | -----------
+--files | path | Shell path to raw data file set. Accepts wildcards for multiple entries
+--isa | path | Path to ISA.zip formatted metadata file
+--species | character | Specify organism (e.g. "Arabidopsis thaliana")
+--platform | character | Specify microarray platform (e.g. "Affymetrix")
+--annotation | path | Path to organism gene level annotation file
+--dir | path | Path to GeneLab curated directory structure top for a GLDS study
+
+### Output
+
+The script generates an output directory with the following structure:
+
+00-RawData
+01-NormalizedData
+02-Limma_DGE
+Metadata
+
+00-RawData Files | Description
+---------------- | -----------
+raw files | Multiple raw data files with platform specific extensions (e.g. CEL, raw.txt, GPR, XYS, etc.)
+raw_qa.html | Raw data quality assessment report generated with --reports flag
+visualization_PCA_table.csv | PCA plotting table for data visualization of raw data
+md5sum.txt | Checksum table for all raw data files
+
+01-NormalizedData Files | Description
+----------------------- | -----------
+normalized.txt | Normalized expression values with probe identifiers
+normalized-annotated.txt | Normalized expression values with gene level identifiers
+normalized-annotated.rda | Normalized expression values with gene level identifiers in R object file format
+normalized_qa.html | Normalized data quality assessment report generated with --reports flag
+visualization_PCA_table.csv | PCA plotting table for data visualization of normalized data
+
+02-Limma_DGE Files | Description
+------------------ | -----------
+contrasts.csv | Table of DGE group contrasts performed
+differential_expression.csv | Gene level DGE results including annotations, expression values, group statistics, log fold change, p-value, and BH adjusted p-value for each group contrast
+visualization_output_table.csv | Additional precalculated values to differential_expression.csv for rapid data visualization
+
+Metadata Files | Description
+-------------- | -----------
+run_sheet.csv | GeneLab generated input file containing sample to file relasionships and other necessary metadata
+probe_annotations.txt | Generalized probe annotation file constructed from source formatted annotation files
+ISA.zip | ISAtab formatted metadata copied if using glds_microarrays.sh API script or if specified from a local source
+  
+
+## Platform Processing Functions
+
+### affymetrix.R
+
+This function takes the glds_microarray.R options object as input and generates output files customized to the Affymetrix platform. 
+Preprocessing is performed with the Oligo package. RMA background correction and Quantiles normalization are performed to generate normalized expression values. For ST class arrays, core gene level estimation is performed. DGE analysis is performed with the Limma package. Control probes and unannotated probes are filtered. Multiple probes mapping to a gene identifier are aggregated by maximum interquartile range. Normalized expression values are fit to a linear model with empirical Bayes estimation of priors. Group contrast log fold change, t-test p-values, and Benjamini Hochberg adjusted p-values with FDR of 0.05 are calculated.
+
+### agilent_one_channel.R
+
+This function takes the glds_microarray.R options object as input and generates output files customized to the Affymetrix platform. 
+Preprocessing is performed with the Oligo package. RMA background correction and Quantiles normalization are performed to generate normalized expression values. For ST class arrays, core gene level estimation is performed. DGE analysis is performed with the Limma package. Control probes and unannotated probes are filtered. Multiple probes mapping to a gene identifier are aggregated by maximum interquartile range. Normalized expression values are fit to a linear model with empirical Bayes estimation of priors. Group contrast log fold change, t-test p-values, and Benjamini Hochberg adjusted p-values with FDR of 0.05 are calculated.
+
+### agilent_two_channel.R
+
+This function takes the glds_microarray.R options object as input and generates output files customized to the Affymetrix platform. 
+Preprocessing is performed with the Oligo package. RMA background correction and Quantiles normalization are performed to generate normalized expression values. For ST class arrays, core gene level estimation is performed. DGE analysis is performed with the Limma package. Control probes and unannotated probes are filtered. Multiple probes mapping to a gene identifier are aggregated by maximum interquartile range. Normalized expression values are fit to a linear model with empirical Bayes estimation of priors. Group contrast log fold change, t-test p-values, and Benjamini Hochberg adjusted p-values with FDR of 0.05 are calculated.
+
+### illumina_expression.R
+
+This function takes the glds_microarray.R options object as input and generates output files customized to the Affymetrix platform. 
+Preprocessing is performed with the Oligo package. RMA background correction and Quantiles normalization are performed to generate normalized expression values. For ST class arrays, core gene level estimation is performed. DGE analysis is performed with the Limma package. Control probes and unannotated probes are filtered. Multiple probes mapping to a gene identifier are aggregated by maximum interquartile range. Normalized expression values are fit to a linear model with empirical Bayes estimation of priors. Group contrast log fold change, t-test p-values, and Benjamini Hochberg adjusted p-values with FDR of 0.05 are calculated.
+
+## Quality Assessment Functions
+
+### qa_summary_raw.rmd
+
+This function takes platform specific raw data objects and generates an html report file containing chip level imageplots, intensity boxplots, density distribution plots, and PCA plots (for one channel datasets).
+
+### qa_summary_normalized.rmd
+
+This function takes platform specific normalized data objects and generates an html report file containing chip level intensity boxplots, density distribution plots, and PCA plots (for one channel datasets).
